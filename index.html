@@ -1,5 +1,7 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +9,7 @@
   <link rel="stylesheet" href="Style.css">
   <script src="funcionalidad.js" defer></script>
 </head>
+
 <body>
 
   <header class="main-header">
@@ -20,10 +23,10 @@
   </header>
 
   <main class="pos-container">
-    
+
     <section id="catalogo-productos">
-      <div class="hero-banner">
-        <div class="hero-text">
+      <div class="catalogo-banner">
+        <div class="catalogo-text">
           <h2>Catálogo de Productos</h2>
           <p>Selecciona los productos y ajusta cantidades para armar la factura.</p>
         </div>
@@ -33,23 +36,18 @@
         </div>
       </div>
 
-      <!-- Barra de Filtros y Búsqueda -->
+
       <div class="filter-bar">
         <div class="search-box">
-          <input type="text" id="search-input" placeholder="🔍 Buscar producto por nombre...">
-        </div>
-        <div class="categories-filter" id="categories-container">
-          <!-- Filtros dinámicos de categoría -->
+          <input type="search" id="search-input" placeholder="🔍 Buscar producto por nombre..." aria-label = "Buscar producto por nombre">
         </div>
       </div>
 
-      <!-- Grilla de Productos -->
+      <!-- grid vacia porque el js es quien se encarga de llenar y renderizar productos dinamicamente -->
       <div id="product-grid" class="product-grid">
-        <!-- Renderizado desde JavaScript -->
       </div>
     </section>
 
-    <!-- SECCIÓN DERECHA: PANEL DE FACTURA -->
     <section class="invoice-section">
       <div class="invoice-card">
         <div class="invoice-header">
@@ -57,31 +55,31 @@
           <p>Resumen y desglose de compra</p>
         </div>
 
-        <!-- Contenedor dinámico de items de la factura -->
+        <!-- Productos agregados a la factura de forma dinamica -->
         <div id="invoice-items-list" class="invoice-items-list">
-          <!-- Renderizado desde JavaScript -->
         </div>
 
-        <!-- Resumen de Totales e IVA (19%) -->
+
         <div class="invoice-summary">
           <div class="summary-row">
             <span>Subtotal General:</span>
-            <strong id="subtotal-val">$0</strong>
+            <strong id="subtotal-valor">$0</strong>
           </div>
+
           <div class="summary-row">
             <span>IVA Aplicado (19%):</span>
-            <strong id="iva-val">$0</strong>
+            <strong id="iva-valor">$0</strong>
           </div>
+
           <hr class="divider">
           <div class="summary-row total-row">
             <span>TOTAL A PAGAR:</span>
-            <strong id="total-val">$0</strong>
+            <strong id="total-valor">$0</strong>
           </div>
 
-          <!-- Botones de Acción -->
           <div class="invoice-actions">
-            <button id="btn-clear" class = "btn-clear">Vaciar Factura</button>
-            <button id = "btn-process" class="btn-primary">Finalizar Venta 💳</button>
+            <button type ="button" id="btn-vaciar" class = "btn-vaciar">Vaciar Factura</button>
+            <button type = "button" id = "btn-finalizar" class="btn-finalizar">Finalizar Venta 💳</button>
           </div>
         </div>
       </div>
@@ -91,3 +89,7 @@
 
 </body>
 </html>
+
+
+
+

@@ -23,7 +23,7 @@ body {
   min-height: 100vh;
   padding: 20px;
 }
-/* ENCABEZADO PRINCIPAL*/
+
 .main-header {
   background-color: var(--color-card);
   padding: 16px 28px;
@@ -56,7 +56,6 @@ body {
   font-weight: 600;
 }
 
-/* LAYOUT DE UNA SOLA VISTA (GRID)*/
 .pos-container {
   display: grid;
   grid-template-columns: 1fr;
@@ -71,8 +70,7 @@ body {
   }
 }
 
-/* CATÁLOGOS, BANNER Y FILTROS*/
-.hero-banner {
+.catalogo-banner {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   padding: 20px 24px;
   border-radius: var(--radius);
@@ -84,12 +82,12 @@ body {
   border: 1px solid var(--color-border);
 }
 
-.hero-text h2 {
+.catalogo-text h2 {
   font-size: 20px;
   margin-bottom: 4px;
 }
 
-.hero-text p {
+.catalogo-text p {
   font-size: 13px;
   opacity: 0.9;
 }
@@ -172,7 +170,6 @@ body {
   font-weight: 700;
 }
 
-/* Grilla de Productos */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -244,7 +241,7 @@ body {
   gap: 8px;
 }
 
-.qty-input {
+.cantidad-input {
   width: 48px;
   text-align: center;
   border: 1px solid var(--color-border);
@@ -253,7 +250,7 @@ body {
   background-color: var(--color-bg);
 }
 
-.btn-add-cart {
+.btn-añadir-carrito {
   flex-grow: 1;
   background-color: var(--color-primary);
   border: none;
@@ -264,11 +261,10 @@ body {
   transition: filter 0.2s;
 }
 
-.btn-add-cart:hover {
+.btn-añadir-carrito:hover {
   filter: brightness(0.95);
 }
 
-/* PANEL FIJO DE FACTURA (DERECHA)*/
 .invoice-card {
   background-color: var(--color-card);
   border-radius: var(--radius);
@@ -322,7 +318,7 @@ body {
   gap: 8px;
 }
 
-.btn-qty {
+.btn-cantidad-input {
   background-color: var(--color-accent);
   border: 1px solid var(--color-border);
   width: 26px;
@@ -332,11 +328,11 @@ body {
   cursor: pointer;
 }
 
-.btn-qty:hover {
+.btn-cantidad-input:hover {
   background-color: var(--color-primary);
 }
 
-.btn-delete {
+.btn-borrar {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -344,7 +340,6 @@ body {
   margin-left: 4px;
 }
 
-/*Totales y Botones de Venta*/
 .invoice-summary {
   padding-top: 12px;
   border-top: 2px solid var(--color-bg);
@@ -377,7 +372,7 @@ body {
   gap: 10px;
 }
 
-.btn-primary {
+.btn-finalizar {
   flex: 2;
   background-color: var(--color-primary);
   border: none;
@@ -391,7 +386,7 @@ body {
   filter: brightness(0.95);
 }
 
-.btn-clear {
+.btn-vaciar {
   flex: 1;
   background-color: transparent;
   border: 1px solid var(--color-danger);
