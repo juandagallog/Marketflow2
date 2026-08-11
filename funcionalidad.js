@@ -282,16 +282,6 @@ if (botonFinalizar){
 renderizarProductos(productos);
 renderizarFactura();
 
-
-
-
-
-
-
-
-
-
-
 const contadorProductos = document.querySelector("#total-products-count");
 contadorProductos.textContent = productos.length;
 
