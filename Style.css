@@ -227,8 +227,8 @@ body {
 }
 
 .btn-añadir-carrito {
-  width: 100% !important;   /* Ocupa todo el ancho disponible */
-  padding: 12px;             /* Les da buen grosor y altura */
+  width: 100% !important;  
+  padding: 12px;             
   display: block;
   border: none;
   border-radius: 8px;
