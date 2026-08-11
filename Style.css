@@ -163,6 +163,14 @@ body {
   justify-content: space-between;
   box-shadow: var(--shadow);
   transition: transform 0.2s, box-shadow 0.2s;
+  align-items: stretch;
+}
+
+.product-controls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .product-card:hover {
@@ -219,14 +227,16 @@ body {
 }
 
 .btn-añadir-carrito {
-  flex-grow: 1;
-  background-color: var(--color-primary);
+  width: 100% !important;  
+  padding: 12px;             
+  display: block;
   border: none;
-  padding: 8px;
   border-radius: 8px;
+  background-color: var(--color-primary);
   font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  transition: filter 0.2s;
+  text-align: center;
 }
 
 .btn-añadir-carrito:hover {
