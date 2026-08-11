@@ -173,7 +173,7 @@ body {
 
 .product-footer {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 8px;
     margin-top: auto;
 }
