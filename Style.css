@@ -1,12 +1,12 @@
-/* PALETA DE COLORES Y VARIABLES              */
+/* PALETA DE COLORES Y VARIABLES*/
 :root {
-  --color-primary: #FFBA7D;   /* Melocotón / Naranja suave */
-  --color-bg: #FAEDCD;        /* Crema cálido */
-  --color-accent: #FAE38C;    /* Amarillo suave */
-  --color-card: #FFFFFF;      /* Blanco para contenedores */
-  --color-text: #332821;      /* Café oscuro de alto contraste */
-  --color-border: #E8D7B8;    /* Borde suave */
-  --color-danger: #E76F51;    /* Rojo/Coral para vaciar/eliminar */
+  --color-primary: #FFBA7D;   
+  --color-bg: #FAEDCD;        
+  --color-accent: #FAE38C;    
+  --color-card: #FFFFFF;      
+  --color-text: #332821;      
+  --color-border: #E8D7B8;    
+  --color-danger: #E76F51;    
   --radius: 14px;
   --shadow: 0 4px 15px rgba(51, 40, 33, 0.08);
 }
@@ -24,7 +24,7 @@ body {
   min-height: 100vh;
   padding: 20px;
 }
-/* ENCABEZADO PRINCIPAL                       */
+/* ENCABEZADO PRINCIPAL*/
 .main-header {
   background-color: var(--color-card);
   padding: 16px 28px;
@@ -57,7 +57,7 @@ body {
   font-weight: 600;
 }
 
-/* LAYOUT DE UNA SOLA VISTA (GRID)            */
+/* LAYOUT DE UNA SOLA VISTA (GRID)*/
 .pos-container {
   display: grid;
   grid-template-columns: 1fr;
@@ -72,7 +72,7 @@ body {
   }
 }
 
-/* CATÁLOGOS, BANNER Y FILTROS                */
+/* CATÁLOGOS, BANNER Y FILTROS*/
 .hero-banner {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   padding: 20px 24px;
@@ -269,7 +269,7 @@ body {
   filter: brightness(0.95);
 }
 
-/* PANEL FIJO DE FACTURA (DERECHA)            */
+/* PANEL FIJO DE FACTURA (DERECHA)*/
 .invoice-card {
   background-color: var(--color-card);
   border-radius: var(--radius);
@@ -345,7 +345,7 @@ body {
   margin-left: 4px;
 }
 
-/* Totales y Botones de Venta */
+/*Totales y Botones de Venta*/
 .invoice-summary {
   padding-top: 12px;
   border-top: 2px solid var(--color-bg);
