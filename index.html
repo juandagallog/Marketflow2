@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Papelería Papel y Luna - Sistema POS</title>
+  <link rel="stylesheet" href="Style.css">
+</head>
+<body>
 
+  <!-- Encabezado Principal -->
+  <header class="main-header">
+    <div class="header-brand">
+      <span class="brand-logo">🌙</span>
+      <div>
+        <h1 class="brand-title">Papel y Luna</h1>
+        <p class="brand-sub">Sistema de Facturación POS</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Layout de Vista Única (Grid POS) -->
+  <main class="pos-container">
+    
+    <!-- SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS -->
+    <section class="catalog-section">
+      <!-- Banner Informativo -->
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>Catálogo de Productos</h2>
+          <p>Selecciona los productos y ajusta cantidades para armar la factura.</p>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-number" id="total-products-count">12</span>
+          <span class="stat-label">Artículos</span>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros y Búsqueda -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="🔍 Buscar producto por nombre...">
+        </div>
+        <div class="categories-filter" id="categories-container">
+          <!-- Filtros dinámicos de categoría -->
+        </div>
+      </div>
+
+      <!-- Grilla de Productos -->
+      <div id="product-grid" class="product-grid">
+        <!-- Renderizado desde JavaScript -->
+      </div>
+    </section>
+
+    <!-- SECCIÓN DERECHA: PANEL DE FACTURA -->
+    <section class="invoice-section">
+      <div class="invoice-card">
+        <div class="invoice-header">
+          <h2>📄 Factura de Venta</h2>
+          <p>Resumen y desglose de compra</p>
+        </div>
+
+        <!-- Contenedor dinámico de items de la factura -->
+        <div id="invoice-items-list" class="invoice-items-list">
+          <!-- Renderizado desde JavaScript -->
+        </div>
+
+        <!-- Resumen de Totales e IVA (19%) -->
+        <div class="invoice-summary">
+          <div class="summary-row">
+            <span>Subtotal General:</span>
+            <strong id="subtotal-val">$0</strong>
+          </div>
+          <div class="summary-row">
+            <span>IVA Aplicado (19%):</span>
+            <strong id="iva-val">$0</strong>
+          </div>
+          <hr class="divider">
+          <div class="summary-row total-row">
+            <span>TOTAL A PAGAR:</span>
+            <strong id="total-val">$0</strong>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="invoice-actions">
+            <button class="btn-clear" onclick="clearInvoice()">Vaciar Factura</button>
+            <button class="btn-primary" onclick="processPayment()">Finalizar Venta 💳</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="Funcionalidad.js"></script>
+</body>
+</html>
