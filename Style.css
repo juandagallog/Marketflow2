@@ -163,6 +163,7 @@ body {
   justify-content: space-between;
   box-shadow: var(--shadow);
   transition: transform 0.2s, box-shadow 0.2s;
+  align-items: stretch;
 }
 
 .product-card:hover {
@@ -222,11 +223,14 @@ body {
   flex-grow: 1;
   background-color: var(--color-primary);
   border: none;
-  padding: 8px;
+  padding: 10px;
   border-radius: 8px;
   font-weight: 700;
   cursor: pointer;
   transition: filter 0.2s;
+  width: 100%;
+  display: box;
+  margin-top: 6px;
 }
 
 .btn-añadir-carrito:hover {
