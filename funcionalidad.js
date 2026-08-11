@@ -54,29 +54,40 @@ function renderizarProductos(listaProductos){
     descripcion.textContent = producto.descripcion;
     tarjeta.appendChild(descripcion);
     
-    const precio = document.createElement('p');
-    precio.classList.add('product-price');
-    precio.textContent = `$${producto.precio.toLocaleString('es-CO')}`;
-    tarjeta.appendChild(precio);
+  const pieProducto = document.createElement('div');
+  pieProducto.classList.add('product-footer');
 
-    const cantidad = document.createElement("input");
-    cantidad.type = "number";
-    cantidad.value = 1;
-    cantidad.min = 1;
-    cantidad.classList.add("cantidad-input")
-    cantidad.id = `cantidad-${producto.id}`;
-    tarjeta.appendChild(cantidad);
+  const precio = document.createElement('p');
+  precio.classList.add('product-price');
+  precio.textContent = `$${producto.precio.toLocaleString('es-CO')}`;
+  pieProducto.appendChild(precio);
 
-    const botonAgregar = document.createElement('button');
-    botonAgregar.textContent = 'Agregar';
-    botonAgregar.classList.add('btn-añadir-carrito');
-    botonAgregar.addEventListener("click", () => {
+  const controlesProducto = document.createElement('div');
+  controlesProducto.classList.add('product-controls');
+
+  const cantidad = document.createElement("input");
+  cantidad.type = "number";
+  cantidad.value = 1;
+  cantidad.min = 1;
+  cantidad.classList.add("cantidad-input");
+  cantidad.id = `cantidad-${producto.id}`;
+
+  const botonAgregar = document.createElement('button');
+  botonAgregar.textContent = 'Agregar';
+  botonAgregar.classList.add('btn-añadir-carrito');
+
+  botonAgregar.addEventListener("click", () => {
       agregarAFactura(producto.id, cantidad.value);
-    })
-    tarjeta.appendChild(botonAgregar);
+  });
 
+  controlesProducto.appendChild(cantidad);
+  controlesProducto.appendChild(botonAgregar);
 
-    productGrid.appendChild(tarjeta);
+  pieProducto.appendChild(controlesProducto);
+
+  tarjeta.appendChild(pieProducto);
+
+  productGrid.appendChild(tarjeta);
 });
 
 }

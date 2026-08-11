@@ -167,10 +167,15 @@ body {
 }
 
 .product-controls {
-  width: 100%;
   display: flex;
-  flex-direction: column;
   gap: 8px;
+}
+
+.product-footer {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin-top: auto;
 }
 
 .product-card:hover {
@@ -227,16 +232,13 @@ body {
 }
 
 .btn-añadir-carrito {
-  width: 100% !important;  
-  padding: 12px;             
-  display: block;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--color-primary);
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  text-align: center;
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--color-primary);
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .btn-añadir-carrito:hover {
