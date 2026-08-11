@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Papelería Papel y Luna - Sistema POS</title>
   <link rel="stylesheet" href="Style.css">
+  <script src="funcionalidad.js" defer></script>
 </head>
 <body>
 
-  <!-- Encabezado Principal -->
   <header class="main-header">
     <div class="header-brand">
       <span class="brand-logo">🌙</span>
@@ -19,19 +19,16 @@
     </div>
   </header>
 
-  <!-- Layout de Vista Única (Grid POS) -->
   <main class="pos-container">
     
-    <!-- SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS -->
-    <section class="catalog-section">
-      <!-- Banner Informativo -->
+    <section id="catalogo-productos">
       <div class="hero-banner">
         <div class="hero-text">
           <h2>Catálogo de Productos</h2>
           <p>Selecciona los productos y ajusta cantidades para armar la factura.</p>
         </div>
         <div class="stat-pill">
-          <span class="stat-number" id="total-products-count">12</span>
+          <span class="stat-number" id="total-products-count">0</span>
           <span class="stat-label">Artículos</span>
         </div>
       </div>
@@ -83,8 +80,8 @@
 
           <!-- Botones de Acción -->
           <div class="invoice-actions">
-            <button class="btn-clear" onclick="clearInvoice()">Vaciar Factura</button>
-            <button class="btn-primary" onclick="processPayment()">Finalizar Venta 💳</button>
+            <button id="btn-clear" class = "btn-clear">Vaciar Factura</button>
+            <button id = "btn-process" class="btn-primary">Finalizar Venta 💳</button>
           </div>
         </div>
       </div>
@@ -92,6 +89,5 @@
 
   </main>
 
-  <script src="Funcionalidad.js"></script>
 </body>
 </html>
