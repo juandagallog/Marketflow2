@@ -382,3 +382,8 @@ body {
   padding: 40px 10px;
   color: #888;
 }
+
+
+.vista-oculta {
+  display: none;
+}

@@ -6,8 +6,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Papelería Papel y Luna - Sistema POS</title>
-  <link rel="stylesheet" href="Style.css">
-  <script src="funcionalidad.js" defer></script>
+  <link rel="stylesheet" href="css/Style.css">
+  <script src="js/data.js" defer></script>
+  <script src="js/pos.js" defer></script>
+  <script src="js/productos.js" defer></script>
+  <script src="js/historial.js" defer></script>
+  <script src="js/app.js" defer></script>
 </head>
 
 <body>
@@ -20,70 +24,89 @@
         <p class="brand-sub">Sistema de Facturación POS</p>
       </div>
     </div>
+
+    <nav class="header-nav">
+      <button type="button" id="btn-nav-pos" class="nav-btn">POS / Factura</button>
+      <button type="button" id="btn-nav-productos" class="nav-btn">Productos</button>
+      <button type="button" id="btn-nav-historial" class="nav-btn">Historial</button>
+    </nav>
   </header>
 
-  <main class="pos-container">
-
-    <section id="catalogo-productos">
-      <div class="catalogo-banner">
-        <div class="catalogo-text">
-          <h2>Catálogo de Productos</h2>
-          <p>Selecciona los productos y ajusta cantidades para armar la factura.</p>
-        </div>
-        <div class="stat-pill">
-          <span class="stat-number" id="total-products-count">0</span>
-          <span class="stat-label">Artículos</span>
-        </div>
-      </div>
+  <main>
 
 
-      <div class="filter-bar">
-        <div class="search-box">
-          <input type="search" id="search-input" placeholder="🔍 Buscar producto por nombre..." aria-label = "Buscar producto por nombre">
-        </div>
-      </div>
+    <section id ="vista-pos" class="pos-container" >
 
-      <!-- grid vacia porque el js es quien se encarga de llenar y renderizar productos dinamicamente -->
-      <div id="product-grid" class="product-grid">
-      </div>
-    </section>
-
-    <section class="invoice-section">
-      <div class="invoice-card">
-        <div class="invoice-header">
-          <h2>📄 Factura de Venta</h2>
-          <p>Resumen y desglose de compra</p>
-        </div>
-
-        <!-- Productos agregados a la factura de forma dinamica -->
-        <div id="invoice-items-list" class="invoice-items-list">
-        </div>
-
-
-        <div class="invoice-summary">
-          <div class="summary-row">
-            <span>Subtotal General:</span>
-            <strong id="subtotal-valor">$0</strong>
+      <section id="catalogo-productos">
+        <div class="catalogo-banner">
+          <div class="catalogo-text">
+            <h2>Catálogo de Productos</h2>
+            <p>Selecciona los productos y ajusta cantidades para armar la factura.</p>
           </div>
-
-          <div class="summary-row">
-            <span>IVA Aplicado (19%):</span>
-            <strong id="iva-valor">$0</strong>
-          </div>
-
-          <hr class="divider">
-          <div class="summary-row total-row">
-            <span>TOTAL A PAGAR:</span>
-            <strong id="total-valor">$0</strong>
-          </div>
-
-          <div class="invoice-actions">
-            <button type ="button" id="btn-vaciar" class = "btn-vaciar">Vaciar Factura</button>
-            <button type = "button" id = "btn-finalizar" class="btn-finalizar">Finalizar Venta 💳</button>
+          <div class="stat-pill">
+            <span class="stat-number" id="total-products-count">0</span>
+            <span class="stat-label">Artículos</span>
           </div>
         </div>
-      </div>
-    </section>
+
+
+        <div class="filter-bar">
+          <div class="search-box">
+            <input type="search" id="search-input" placeholder="🔍 Buscar producto por nombre..." aria-label = "Buscar producto por nombre">
+          </div>
+        </div>
+
+        <!-- grid vacia porque el js es quien se encarga de llenar y renderizar productos dinamicamente -->
+        <div id="product-grid" class="product-grid">
+        </div>
+      </section>
+
+      <section class="invoice-section">
+        <div class="invoice-card">
+          <div class="invoice-header">
+            <h2>📄 Factura de Venta</h2>
+            <p>Resumen y desglose de compra</p>
+          </div>
+
+          <!-- Productos agregados a la factura de forma dinamica -->
+          <div id="invoice-items-list" class="invoice-items-list">
+          </div>
+
+
+          <div class="invoice-summary">
+            <div class="summary-row">
+              <span>Subtotal General:</span>
+              <strong id="subtotal-valor">$0</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>IVA Aplicado (19%):</span>
+              <strong id="iva-valor">$0</strong>
+            </div>
+
+            <hr class="divider">
+            <div class="summary-row total-row">
+              <span>TOTAL A PAGAR:</span>
+              <strong id="total-valor">$0</strong>
+            </div>
+
+            <div class="invoice-actions">
+              <button type ="button" id="btn-vaciar" class = "btn-vaciar">Vaciar Factura</button>
+              <button type = "button" id = "btn-finalizar" class="btn-finalizar">Finalizar Venta 💳</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+  </section>
+
+  <section id="vista-productos" class ="vista-oculta">
+    <h2>Gestion de Productos</h2>
+  </section>
+
+  <section id="vista-historial" class ="vista-oculta">
+    <h2>Historial de ventas</h2>
+  </section>
 
   </main>
 
