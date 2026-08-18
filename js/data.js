@@ -1,6 +1,6 @@
 // Productos INICIALES DE LA DEMO
 
-export const productosIniciales = [
+const productosIniciales = [
   { id: 1, codigo: "PROD-001", nombre: "Cuaderno Moleskine", categoria: "Cuadernos", precio: 18000, costo: 11000, trackStock: true, stock: 15, descripcion: "Cuaderno argollado tapa dura 100 hojas" },
   { id: 2, codigo: "PROD-002", nombre: "Set Bolígrafos Gel", categoria: "Escritura", precio: 12500, costo: 7000, trackStock: true, stock: 20, descripcion: "Pack de 5 bolígrafos de colores 0.7mm" },
   { id: 3, codigo: "PROD-003", nombre: "Resaltadores Pastel", categoria: "Escritura", precio: 9800, costo: 5500, trackStock: true, stock: 12, descripcion: "Set de 6 marcadores tonos pastel" },

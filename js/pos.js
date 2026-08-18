@@ -1,6 +1,6 @@
 // ARCHIVO PRINCIPAL, LOGICA EXISTENTE. Entrega 2.1
 
-let productos = [...productosIniciales];
+let productos = obtenerProductosLocalStorage();
 let factura = [];
 
 const productGrid = document.querySelector('#product-grid');

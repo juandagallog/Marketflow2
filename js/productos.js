@@ -5,23 +5,27 @@ editar
 eliminar
 validaciones
 */
-export function renderTablaCRUD(productos) {
+
+let productoAEliminarId = null;
+
+// Renderiza la tabla CRUD
+function renderTablaCRUD(listaProductos) {
 const productsTableBody = document.querySelector('#products-table-body');
 if (!productsTableBody) return;
 productsTableBody.innerHTML = "";
 
-productos.forEach(prod => {
+listaProductos.forEach(prod => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
     <td><strong>${prod.codigo}</strong></td>
     <td>${prod.nombre}</td>
     <td>${prod.categoria}</td>
     <td>$${prod.precio.toLocaleString('es-CO')}</td>
-    <td>$${prod.costo.toLocaleString('es-CO')}</td>
+    <td>$${(prod.costo || 0).toLocaleString('es-CO')}</td>
     <td>${prod.trackStock ? `${prod.stock} un.` : 'No aplica'}</td>
     <td>
-        <button type="button" class="btn-editar" data-id="${prod.id}"></button>
-        <button type="button" class="btn-eliminar" data-id="${prod.id}"></button>
+        <button type="button" class="btn-editar" data-id="${prod.id}">✏️</button>
+        <button type="button" class="btn-eliminar" data-id="${prod.id}">🗑️</button>
     </td>
     `;
     productsTableBody.appendChild(tr);
@@ -29,18 +33,38 @@ productos.forEach(prod => {
 
   // Asigna eventos a los botones recién creados
 document.querySelectorAll('.btn-editar').forEach(btn => {
-    btn.addEventListener('click', () => openProductModal(Number(btn.dataset.id), productos));
+    btn.addEventListener('click', () => openProductModal(Number(btn.dataset.id), listaProductos));
 });
 
 document.querySelectorAll('.btn-eliminar').forEach(btn => {
-    btn.addEventListener('click', () => confirmarEliminacion(Number(btn.dataset.id), productos));
+    btn.addEventListener('click', () => confirmarEliminacion(Number(btn.dataset.id), listaProductos));
 });
 }
 
-import { guardarProductosLocalStorage } from './storage.js';
+// Cierra el modal de productos
+function closeProductModal() {
+const modal = document.getElementById('product-modal');
+if (modal) modal.classList.add('hidden');
+}
+
+// Cierra el modal de confirmación de eliminación
+function closeDeleteModal() {
+const modal = document.getElementById('delete-modal');
+if (modal) modal.classList.add('hidden');
+}
+
+// Habilita o deshabilita el campo de stock según el checkbox
+function toggleStockField() {
+const trackCheckbox = document.getElementById('track-inventory');
+const stockInput = document.getElementById('product-stock');
+if (trackCheckbox && stockInput) {
+    stockInput.disabled = !trackCheckbox.checked;
+    if (!trackCheckbox.checked) stockInput.value = "";
+}
+}
 
 // Abre el modal (vacío para crear, o lleno para editar)
-export function openProductModal(productId = null, productos = []) {
+function openProductModal(productId = null, listaProductos = []) {
 const modal = document.getElementById('product-modal');
 const form = document.getElementById('product-form');
 if (!modal || !form) return;
@@ -49,7 +73,7 @@ form.reset();
 
 if (productId) {
     // MODO EDITAR
-    const prod = productos.find(p => p.id === productId);
+    const prod = listaProductos.find(p => p.id === productId);
     if (!prod) return;
 
     document.getElementById('modal-title').textContent = "Editar Producto";
@@ -67,7 +91,7 @@ if (productId) {
     // MODO CREAR
     document.getElementById('modal-title').textContent = "Nuevo Producto";
     document.getElementById('product-id').value = "";
-    document.getElementById('product-code').value = `PROD-${String(productos.length + 1).padStart(3, '0')}`;
+    document.getElementById('product-code').value = `PROD-${String(listaProductos.length + 1).padStart(3, '0')}`;
     document.getElementById('product-stock').disabled = true;
 }
 
@@ -75,7 +99,7 @@ modal.classList.remove('hidden');
 }
 
 // Procesa el envío del formulario (Crear o Modificar en el arreglo)
-export function handleFormSubmit(event, productos) {
+function handleFormSubmit(event, listaProductos) {
 event.preventDefault();
 
 const id = document.getElementById('product-id').value;
@@ -90,33 +114,42 @@ const stock = trackStock ? Number(document.getElementById('product-stock').value
 
 if (id) {
     // Actualiza el producto existente
-    const index = productos.findIndex(p => p.id === Number(id));
+    const index = listaProductos.findIndex(p => p.id === Number(id));
     if (index !== -1) {
-    productos[index] = { ...productos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
+    listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
     }
 } else {
     // Crear nuevo producto
     const nuevoProducto = { id: Date.now(), codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
-    productos.push(nuevoProducto);
+    listaProductos.push(nuevoProducto);
 }
 
-  // Guarda en localStorage y refrescar la UI
-guardarProductosLocalStorage(productos);
+  // Guarda en localStorage si la función existe y refresca la interfaz
+if (typeof guardarProductosLocalStorage === 'function') {
+    guardarProductosLocalStorage(listaProductos);
+}
+
 closeProductModal();
-renderTablaCRUD(productos);
+renderTablaCRUD(listaProductos);
+
+  // Si existe la función de re-renderizar la catálogo POS, la ejecuta
+if (typeof renderizarProductos === 'function') {
+    renderizarProductos(listaProductos);
+}
 }
 
-let productoAEliminarId = null;
-
-export function confirmarEliminacion(id, productos) {
-const prod = productos.find(p => p.id === id);
+function confirmarEliminacion(id, listaProductos) {
+const prod = listaProductos.find(p => p.id === id);
 if (!prod) return;
 
 productoAEliminarId = id;
-document.getElementById('delete-product-name').textContent = prod.nombre;
-document.getElementById('delete-modal').classList.remove('hidden');
+const nombreElem = document.getElementById('delete-product-name');
+if (nombreElem) nombreElem.textContent = prod.nombre;
+
+const modal = document.getElementById('delete-modal');
+if (modal) modal.classList.remove('hidden');
 }
 
-export function getProductoAEliminarId() {
+function getProductoAEliminarId() {
 return productoAEliminarId;
 }
