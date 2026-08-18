@@ -5,7 +5,6 @@ editar
 eliminar
 validaciones
 */
-
 let productoAEliminarId = null;
 
 // Renderiza la tabla CRUD
@@ -72,7 +71,7 @@ if (!modal || !form) return;
 form.reset();
 
 if (productId) {
-    // MODO EDITAR
+    // INICIA EL MODO DE EDITAR
     const prod = listaProductos.find(p => p.id === productId);
     if (!prod) return;
 
@@ -88,7 +87,7 @@ if (productId) {
     document.getElementById('product-stock').disabled = !prod.trackStock;
     document.getElementById('product-stock').value = prod.trackStock ? prod.stock : "";
 } else {
-    // MODO CREAR
+    // INICIA EL MODO DE CREAR
     document.getElementById('modal-title').textContent = "Nuevo Producto";
     document.getElementById('product-id').value = "";
     document.getElementById('product-code').value = `PROD-${String(listaProductos.length + 1).padStart(3, '0')}`;
@@ -119,23 +118,22 @@ if (id) {
     listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
     }
 } else {
-    // Crear nuevo producto
+    // Crear un nuevo producto
     const nuevoProducto = { id: Date.now(), codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
     listaProductos.push(nuevoProducto);
 }
 
   // Guarda en localStorage si la función existe y refresca la interfaz
-if (typeof guardarProductosLocalStorage === 'function') {
-    guardarProductosLocalStorage(listaProductos);
-}
+
+guardarProductosLocalStorage(listaProductos);
 
 closeProductModal();
 renderTablaCRUD(listaProductos);
 
   // Si existe la función de re-renderizar la catálogo POS, la ejecuta
-if (typeof renderizarProductos === 'function') {
-    renderizarProductos(listaProductos);
-}
+
+renderizarProductos(listaProductos);
+
 }
 
 function confirmarEliminacion(id, listaProductos) {

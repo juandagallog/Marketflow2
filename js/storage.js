@@ -20,15 +20,14 @@ Centralizamos esa responsabilidad aca
 
 */
 
-// Guardar la lista actualizada de productos en la memoria del navegador
-// Obtener productos guardados o cargar los iniciales de data.js
+// Guardamos la lista actualizada de productos en la memoria del navegador
+// Y obtenemos los productos guardados o cargamos los iniciales del documento de data.js
 function obtenerProductosLocalStorage() {
 const guardados = localStorage.getItem('papel_y_luna_productos');
 if (guardados) {
     return JSON.parse(guardados);
 }
-
-  // productosIniciales viene globalmente desde data.js
+  // Si no hay nada, toma los de data.js y los guarda
 guardarProductosLocalStorage(productosIniciales);
 return productosIniciales;
 }
