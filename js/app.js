@@ -33,3 +33,31 @@ btnProductos.addEventListener("click", () => {
 btnHistorial.addEventListener("click", () => {
     mostrarVista(vistaHistorial);
 });
+
+import { renderTablaCRUD, openProductModal, handleFormSubmit, getProductoAEliminarId, closeDeleteModal } from './productos.js';
+import { guardarProductosLocalStorage } from './storage.js';
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // 1. Botón "Nuevo Producto" -> Abre el modal en modo crear
+document.querySelector('#btn-new-product')?.addEventListener('click', () => {
+    openProductModal(null, productos);
+});
+
+  // 2. Submit del Formulario -> Guarda/Edita el producto
+document.getElementById('product-form')?.addEventListener('submit', (e) => {
+    handleFormSubmit(e, productos);
+});
+
+  // 3. Confirmar Eliminación -> Borra el producto seleccionado
+document.getElementById('confirm-delete-btn')?.addEventListener('click', () => {
+    const id = getProductoAEliminarId();
+    if (id) {
+    productos = productos.filter(p => p.id !== id); 
+    guardarProductosLocalStorage(productos);      
+    renderTablaCRUD(productos);                   
+    closeDeleteModal();                            
+    }
+});
+
+});
