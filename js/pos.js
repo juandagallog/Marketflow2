@@ -1,7 +1,8 @@
-// ARCHIVO PRINCIPAL, LOGICA EXISTENTE. Entrega 2.1
+// ARCHIVO PRINCIPAL - POS.JS con Vista de Lista (Tarjetas Apiladas) y Catálogo Normal
 
 let productos = obtenerProductosLocalStorage();
 let factura = [];
+let modoVistaLista = false; // false = catálogo normal (cuadrícula), true = lista apilada
 
 const productGrid = document.querySelector('#product-grid');
 const listaItemsFactura = document.querySelector('#invoice-items-list');
@@ -11,73 +12,117 @@ const ivaValor = document.querySelector('#iva-valor');
 const totalValor = document.querySelector('#total-valor');
 const contadorProductos = document.querySelector("#total-products-count");
 
+const btnLista = document.querySelector("#btn-lista");
+const btnCatalogo = document.querySelector("#btn-catalogo");
+
 
 function renderizarProductos(listaProductos) {
-  // Limpia cualquier tarjeta previamente renderizada
   productGrid.innerHTML = "";
 
-  // Actualiza el contador con la cantidad de productos visibles
   if (contadorProductos) {
     contadorProductos.textContent = listaProductos.length;
   }
 
-  listaProductos.forEach(producto => {
-    const tarjeta = document.createElement('article');
-    tarjeta.classList.add("product-card");
-    
-    // Etiqueta de categoría
-    const categoria = document.createElement('span');
-    categoria.classList.add('product-cat-tag');
-    categoria.textContent = producto.categoria;
-    tarjeta.appendChild(categoria);
-    
-    // Título del producto
-    const titulo = document.createElement('h3');
-    titulo.classList.add('product-title');
-    titulo.textContent = producto.nombre;
-    tarjeta.appendChild(titulo);
-    
-    // Descripción
-    const descripcion = document.createElement('p');
-    descripcion.classList.add('product-desc');
-    descripcion.textContent = producto.descripcion;
-    tarjeta.appendChild(descripcion);
-    
-    // Pie de la tarjeta
-    const pieProducto = document.createElement('div');
-    pieProducto.classList.add('product-footer');
+  if (listaProductos.length === 0) {
+    productGrid.innerHTML = `<p class="empty-list-message" style="grid-column: 1 / -1; text-align: center; padding: 20px;">No hay productos disponibles.</p>`;
+    return;
+  }
 
-    const precio = document.createElement('p');
-    precio.classList.add('product-price');
-    precio.textContent = `$${producto.precio.toLocaleString('es-CO')}`;
-    pieProducto.appendChild(precio);
+  // SI EL MODO VISTA ES LISTA (Cada producto es una tarjeta individual en formato de fila)
+  if (modoVistaLista) {
+    const ul = document.createElement('ul');
+    ul.classList.add("product-list-view");
+    ul.style.cssText = "list-style: none; padding: 0; display: flex; flex-direction: column; gap: 15px; width: 100%;";
 
-    const controlesProducto = document.createElement('div');
-    controlesProducto.classList.add('product-controls');
+    listaProductos.forEach(producto => {
+      const li = document.createElement('li');
+      // Usamos una clase para darle el diseño de recuadro blanco individual en lista
+      li.classList.add("product-list-card-item"); 
+      li.style.cssText = "background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 12px;";
+      
+      li.innerHTML = `
+        <div class="product-list-info">
+          <span class="product-cat-tag">${producto.categoria}</span>
+          <h3 class="product-title" style="margin: 5px 0; font-size: 1.1rem;">${producto.nombre}</h3>
+          <p class="product-desc" style="margin: 0; color: #666; font-size: 0.9rem;">${producto.descripcion || ''}</p>
+        </div>
+        <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 12px; margin-top: 5px;">
+          <p class="product-price" style="font-weight: bold; font-size: 1.2rem; margin: 0;">$${producto.precio.toLocaleString('es-CO')}</p>
+          <div class="product-controls" style="display: flex; gap: 10px; align-items: center;">
+            <input type="number" value="1" min="1" class="cantidad-input" id="cantidad-${producto.id}" style="width: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+            <button type="button" class="btn-añadir-carrito" style="padding: 8px 20px; background-color: #f6ad55; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Agregar</button>
+          </div>
+        </div>
+      `;
 
-    const cantidad = document.createElement("input");
-    cantidad.type = "number";
-    cantidad.value = 1;
-    cantidad.min = 1;
-    cantidad.classList.add("cantidad-input");
-    cantidad.id = `cantidad-${producto.id}`;
+      const botonAgregar = li.querySelector('.btn-añadir-carrito');
+      const inputCantidad = li.querySelector('.cantidad-input');
+      
+      botonAgregar.addEventListener("click", () => {
+        agregarAFactura(producto.id, inputCantidad.value);
+      });
 
-    const botonAgregar = document.createElement('button');
-    botonAgregar.textContent = 'Agregar';
-    botonAgregar.classList.add('btn-añadir-carrito');
-
-    botonAgregar.addEventListener("click", () => {
-      agregarAFactura(producto.id, cantidad.value);
+      ul.appendChild(li);
     });
 
-    controlesProducto.appendChild(cantidad);
-    controlesProducto.appendChild(botonAgregar);
+    productGrid.appendChild(ul);
 
-    pieProducto.appendChild(controlesProducto);
-    tarjeta.appendChild(pieProducto);
+  } else {
+    // MODO CATÁLOGO NORMAL (Cuadrícula original)
+    listaProductos.forEach(producto => {
+      const tarjeta = document.createElement('article');
+      tarjeta.classList.add("product-card");
+      
+      const categoria = document.createElement('span');
+      categoria.classList.add('product-cat-tag');
+      categoria.textContent = producto.categoria;
+      tarjeta.appendChild(categoria);
+      
+      const titulo = document.createElement('h3');
+      titulo.classList.add('product-title');
+      titulo.textContent = producto.nombre;
+      tarjeta.appendChild(titulo);
+      
+      const descripcion = document.createElement('p');
+      descripcion.classList.add('product-desc');
+      descripcion.textContent = producto.descripcion;
+      tarjeta.appendChild(descripcion);
+      
+      const pieProducto = document.createElement('div');
+      pieProducto.classList.add('product-footer');
 
-    productGrid.appendChild(tarjeta);
-  });
+      const precio = document.createElement('p');
+      precio.classList.add('product-price');
+      precio.textContent = `$${producto.precio.toLocaleString('es-CO')}`;
+      pieProducto.appendChild(precio);
+
+      const controlesProducto = document.createElement('div');
+      controlesProducto.classList.add('product-controls');
+
+      const cantidad = document.createElement("input");
+      cantidad.type = "number";
+      cantidad.value = 1;
+      cantidad.min = 1;
+      cantidad.classList.add("cantidad-input");
+      cantidad.id = `cantidad-${producto.id}`;
+
+      const botonAgregar = document.createElement('button');
+      botonAgregar.textContent = 'Agregar';
+      botonAgregar.classList.add('btn-añadir-carrito');
+
+      botonAgregar.addEventListener("click", () => {
+        agregarAFactura(producto.id, cantidad.value);
+      });
+
+      controlesProducto.appendChild(cantidad);
+      controlesProducto.appendChild(botonAgregar);
+
+      pieProducto.appendChild(controlesProducto);
+      tarjeta.appendChild(pieProducto);
+
+      productGrid.appendChild(tarjeta);
+    });
+  }
 }
 
 
@@ -201,18 +246,39 @@ function calcularTotales() {
 }
 
 
-// Evento Búsqueda
+// Evento Búsqueda y Filtro actual
 const searchInput = document.querySelector("#search-input");
+
+function obtenerProductosActuales() {
+  if (!searchInput) return productos;
+  const textoBusqueda = searchInput.value.toLowerCase();
+  return productos.filter(producto => 
+    producto.nombre.toLowerCase().includes(textoBusqueda) ||
+    producto.categoria.toLowerCase().includes(textoBusqueda)
+  );
+}
 
 if (searchInput) {
   searchInput.addEventListener("input", () => {
-    const textoBusqueda = searchInput.value.toLowerCase();
-    const productosFiltrados = productos.filter(producto => 
-      producto.nombre.toLowerCase().includes(textoBusqueda) ||
-      producto.categoria.toLowerCase().includes(textoBusqueda)
-    );
+    renderizarProductos(obtenerProductosActuales());
+  });
+}
 
-    renderizarProductos(productosFiltrados);
+
+// Eventos de los botones de Vista (Lista vs Catálogo)
+if (btnLista && btnCatalogo) {
+  btnLista.addEventListener("click", () => {
+    modoVistaLista = true;
+    btnLista.classList.add("active");
+    btnCatalogo.classList.remove("active");
+    renderizarProductos(obtenerProductosActuales());
+  });
+
+  btnCatalogo.addEventListener("click", () => {
+    modoVistaLista = false;
+    btnCatalogo.classList.add("active");
+    btnLista.classList.remove("active");
+    renderizarProductos(obtenerProductosActuales());
   });
 }
 
