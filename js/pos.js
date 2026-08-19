@@ -295,6 +295,35 @@ if (botonVaciar) {
 
 
 // Evento Finalizar Venta
+// Listener para controlar cuando mostrar/ocultar el campo de efectivo
+const selectPago = document.querySelector('#select-pago');
+const grupoEfectivo = document.querySelector('#grupo-efectivo');
+const inputRecibido = document.querySelector('#monto-recibido');
+const cambioValor = document.querySelector('#cambio-valor');
+
+if (selectPago) {
+  selectPago.addEventListener('change', () => {
+    if (selectPago.value === 'Efectivo') {
+      grupoEfectivo.style.display = 'flex';
+    } else {
+      grupoEfectivo.style.display = 'none';
+    }
+  });
+}
+
+// Evento para calcular el cambio dinámicamente al escribir el dinero recibido
+if (inputRecibido) {
+  inputRecibido.addEventListener('input', () => {
+    const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const total = subtotal * 1.19;
+    const recibido = Number(inputRecibido.value) || 0;
+    const cambio = recibido - total;
+
+    cambioValor.textContent = `$${(cambio > 0 ? cambio : 0).toLocaleString('es-CO')}`;
+  });
+}
+
+// Evento Finalizar Venta actualizado con Requerimientos 2.1
 const botonFinalizar = document.querySelector('#btn-finalizar');
 
 if (botonFinalizar) {
@@ -304,12 +333,50 @@ if (botonFinalizar) {
       return;
     }
 
-    alert('Venta finalizada correctamente.');
-    factura = [];
-    renderizarFactura();
-  });
-}
+    const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const iva = subtotal * 0.19;
+    const total = subtotal + iva;
+    const metodoPago = selectPago ? selectPago.value : 'Efectivo';
+    const recibido = metodoPago === 'Efectivo' ? (Number(inputRecibido.value) || 0) : total;
 
+    if (metodoPago === 'Efectivo' && recibido < total) {
+      alert('El monto recibido es menor al total de la venta.');
+      return;
+    }
+
+    const cambio = metodoPago === 'Efectivo' ? (recibido - total) : 0;
+
+    const nuevaVenta = {
+      id: `FAC-${Date.now()}`,
+      fecha: new Date().toLocaleString('es-CO'),
+      items: [...factura],
+      subtotal,
+      iva,
+      total,
+      metodoPago,
+      recibido,
+      cambio
+    };
+
+    // Guardar Venta
+    guardarVentaLocalStorage(nuevaVenta);
+
+    // Muestra la vista tipo factura lista para imprimir/guardar en PDF
+    if (typeof imprimirFactura === 'function') {
+      imprimirFactura(nuevaVenta);
+    }
+
+    // Reinicia el estado de la factura
+    factura = [];
+    if (inputRecibido) inputRecibido.value = '';
+    if (cambioValor) cambioValor.textContent = '$0';
+    renderizarFactura();
+
+    if (typeof renderHistorial === 'function') {
+      renderHistorial();
+    }
+ });
+}
 
 // Inicialización
 renderizarProductos(productos);

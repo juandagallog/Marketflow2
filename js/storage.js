@@ -35,3 +35,13 @@ return productosIniciales;
 function guardarProductosLocalStorage(productos) {
 localStorage.setItem('papel_y_luna_productos', JSON.stringify(productos));
 }
+function obtenerVentasLocalStorage() {
+  const guardadas = localStorage.getItem('papel_y_luna_ventas');
+  return guardadas ? JSON.parse(guardadas) : [];
+}
+
+function guardarVentaLocalStorage(venta) {
+  const historial = obtenerVentasLocalStorage();
+  historial.push(venta);
+  localStorage.setItem('papel_y_luna_ventas', JSON.stringify(historial));
+}

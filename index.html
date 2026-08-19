@@ -86,7 +86,22 @@
               <span>TOTAL A PAGAR:</span>
               <strong id="total-valor">$0</strong>
             </div>
+            <div class="payment-section" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+              <div class="form-group">
+                <label for="select-pago" style="font-size: 13px; font-weight: bold;">Método de Pago:</label>
+                <select id="select-pago" style="padding: 8px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg);">
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Nequi">Nequi</option>
+                  <option value="Debe">Debe (Crédito)</option>
+                </select>
+              </div>
 
+              <div id="grupo-efectivo" class="form-group">
+                <label for="monto-recibido" style="font-size: 13px; font-weight: bold;">Monto Recibido ($):</label>
+                <input type="number" id="monto-recibido" placeholder="0" min="0" style="padding: 8px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg);">
+                <small style="margin-top: 4px; font-weight: bold;">Cambio: <span id="cambio-valor">$0</span></small>
+              </div>
+            </div>
             <div class="invoice-actions">
               <button type="button" id="btn-vaciar" class="btn-vaciar">Vaciar Factura</button>
               <button type="button" id="btn-finalizar" class="btn-finalizar">Finalizar Venta</button>

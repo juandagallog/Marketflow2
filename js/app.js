@@ -43,8 +43,10 @@ btnProductos.addEventListener("click", () => {
     mostrarVista(vistaProductos, btnProductos);
     renderTablaCRUD(listaProductos);
 });
-btnHistorial.addEventListener("click", () => mostrarVista(vistaHistorial, btnHistorial));
-
+btnHistorial.addEventListener("click", () => {
+    mostrarVista(vistaHistorial, btnHistorial);
+    if (typeof renderHistorial === 'function') renderHistorial();
+});
   // Eventos para Modales y CRUD de Productos
 document.querySelector('#btn-new-product').addEventListener('click', () => {
     openProductModal(null, listaProductos);
