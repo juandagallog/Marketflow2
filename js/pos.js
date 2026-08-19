@@ -28,51 +28,63 @@ function renderizarProductos(listaProductos) {
     return;
   }
 
-  // SI EL MODO VISTA ES LISTA (Cada producto es una tarjeta individual en formato de fila)
+  // SI EL MODO VISTA ES LISTA (Filas horizontales limpias, sin imágenes)
   if (modoVistaLista) {
-    const ul = document.createElement('ul');
-    ul.classList.add("product-list-view");
-    ul.style.cssText = "list-style: none; padding: 0; display: flex; flex-direction: column; gap: 15px; width: 100%;";
+    const contenedorLista = document.createElement('div');
+    contenedorLista.style.cssText = "width: 100%; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden;";
 
-    listaProductos.forEach(producto => {
-      const li = document.createElement('li');
-      // Usamos una clase para darle el diseño de recuadro blanco individual en lista
-      li.classList.add("product-list-card-item"); 
-      li.style.cssText = "background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 12px;";
+    listaProductos.forEach((producto, index) => {
+      const fila = document.createElement('div');
+      const bordeInferior = index < listaProductos.length - 1 ? "border-bottom: 1px solid #eee;" : "";
+      fila.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; ${bordeInferior} gap: 15px;`;
       
-      li.innerHTML = `
-        <div class="product-list-info">
-          <span class="product-cat-tag">${producto.categoria}</span>
-          <h3 class="product-title" style="margin: 5px 0; font-size: 1.1rem;">${producto.nombre}</h3>
-          <p class="product-desc" style="margin: 0; color: #666; font-size: 0.9rem;">${producto.descripcion || ''}</p>
-        </div>
-        <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 12px; margin-top: 5px;">
-          <p class="product-price" style="font-weight: bold; font-size: 1.2rem; margin: 0;">$${producto.precio.toLocaleString('es-CO')}</p>
-          <div class="product-controls" style="display: flex; gap: 10px; align-items: center;">
-            <input type="number" value="1" min="1" class="cantidad-input" id="cantidad-${producto.id}" style="width: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
-            <button type="button" class="btn-añadir-carrito" style="padding: 8px 20px; background-color: #f6ad55; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Agregar</button>
+      fila.innerHTML = `
+        <div style="flex: 2; display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="product-cat-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #fef3c7; color: #d97706; border-radius: 4px; font-weight: bold;">${producto.categoria}</span>
+            <h4 style="margin: 0; font-size: 1rem; color: #333;">${producto.nombre}</h4>
           </div>
+          <span style="font-size: 0.85rem; color: #666;">${producto.descripcion || ''}</span>
+        </div>
+
+        <div style="flex: 1; text-align: right;">
+          <span style="font-weight: bold; font-size: 1.1rem; color: #111;">$${producto.precio.toLocaleString('es-CO')}</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="number" value="1" min="1" class="cantidad-input" id="cantidad-${producto.id}" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+          <button type="button" class="btn-añadir-carrito" style="padding: 6px 16px; background-color: #f6ad55; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Agregar</button>
         </div>
       `;
 
-      const botonAgregar = li.querySelector('.btn-añadir-carrito');
-      const inputCantidad = li.querySelector('.cantidad-input');
+      const botonAgregar = fila.querySelector('.btn-añadir-carrito');
+      const inputCantidad = fila.querySelector('.cantidad-input');
       
       botonAgregar.addEventListener("click", () => {
         agregarAFactura(producto.id, inputCantidad.value);
       });
 
-      ul.appendChild(li);
+      contenedorLista.appendChild(fila);
     });
 
-    productGrid.appendChild(ul);
+    productGrid.appendChild(contenedorLista);
 
   } else {
-    // MODO CATÁLOGO NORMAL (Cuadrícula original)
+    // MODO CATÁLOGO NORMAL (Cuadrícula con tarjetas e imágenes)
     listaProductos.forEach(producto => {
       const tarjeta = document.createElement('article');
       tarjeta.classList.add("product-card");
       
+      // Imagen del producto (Asegúrate de que tu objeto producto tenga la propiedad .imagen)
+      if (producto.imagen) {
+        const imagen = document.createElement('img');
+        imagen.src = producto.imagen;
+        imagen.alt = producto.nombre;
+        imagen.classList.add('product-image'); // Puedes estilizarla en tu CSS
+        imagen.style.cssText = "width: 100%; height: 150px; object-fit: cover; border-radius: 6px 6px 0 0;";
+        tarjeta.appendChild(imagen);
+      }
+
       const categoria = document.createElement('span');
       categoria.classList.add('product-cat-tag');
       categoria.textContent = producto.categoria;
@@ -124,7 +136,6 @@ function renderizarProductos(listaProductos) {
     });
   }
 }
-
 
 function agregarAFactura(productoId, cantidadIngresada) {
   let cantidad = Number(cantidadIngresada);
