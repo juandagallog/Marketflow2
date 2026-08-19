@@ -1,4 +1,4 @@
-// ARCHIVO PRINCIPAL - POS.JS con Vista de Lista (Tarjetas Apiladas) y Catálogo Normal
+// ARCHIVO PRINCIPAL - POS.JS (Corrección de ancho en Vista de Lista)
 
 let productos = obtenerProductosLocalStorage();
 let factura = [];
@@ -28,18 +28,19 @@ function renderizarProductos(listaProductos) {
     return;
   }
 
-  // SI EL MODO VISTA ES LISTA (Filas horizontales limpias, sin imágenes)
+  // SI EL MODO VISTA ES LISTA
   if (modoVistaLista) {
     const contenedorLista = document.createElement('div');
-    contenedorLista.style.cssText = "width: 100%; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden;";
+    // LA SOLUCIÓN: Se agregó 'grid-column: 1 / -1;' para que ocupe todo el ancho de la pantalla
+    contenedorLista.style.cssText = "grid-column: 1 / -1; width: 100%; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden;";
 
     listaProductos.forEach((producto, index) => {
       const fila = document.createElement('div');
       const bordeInferior = index < listaProductos.length - 1 ? "border-bottom: 1px solid #eee;" : "";
-      fila.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; ${bordeInferior} gap: 15px;`;
+      fila.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; ${bordeInferior} gap: 15px; flex-wrap: wrap;`;
       
       fila.innerHTML = `
-        <div style="flex: 2; display: flex; flex-direction: column; gap: 4px;">
+        <div style="flex: 2; display: flex; flex-direction: column; gap: 4px; min-width: 200px;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span class="product-cat-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #fef3c7; color: #d97706; border-radius: 4px; font-weight: bold;">${producto.categoria}</span>
             <h4 style="margin: 0; font-size: 1rem; color: #333;">${producto.nombre}</h4>
@@ -47,7 +48,7 @@ function renderizarProductos(listaProductos) {
           <span style="font-size: 0.85rem; color: #666;">${producto.descripcion || ''}</span>
         </div>
 
-        <div style="flex: 1; text-align: right;">
+        <div style="flex: 1; text-align: right; min-width: 100px;">
           <span style="font-weight: bold; font-size: 1.1rem; color: #111;">$${producto.precio.toLocaleString('es-CO')}</span>
         </div>
 
@@ -70,20 +71,31 @@ function renderizarProductos(listaProductos) {
     productGrid.appendChild(contenedorLista);
 
   } else {
-    // MODO CATÁLOGO NORMAL (Cuadrícula con tarjetas e imágenes)
+    // MODO CATÁLOGO NORMAL (Con soporte robusto de imágenes)
     listaProductos.forEach(producto => {
       const tarjeta = document.createElement('article');
       tarjeta.classList.add("product-card");
       
-      // Imagen del producto (Asegúrate de que tu objeto producto tenga la propiedad .imagen)
-      if (producto.imagen) {
-        const imagen = document.createElement('img');
-        imagen.src = producto.imagen;
-        imagen.alt = producto.nombre;
-        imagen.classList.add('product-image'); // Puedes estilizarla en tu CSS
-        imagen.style.cssText = "width: 100%; height: 150px; object-fit: cover; border-radius: 6px 6px 0 0;";
-        tarjeta.appendChild(imagen);
+      const contenedorImagen = document.createElement('div');
+      contenedorImagen.style.cssText = "width: 100%; height: 150px; background-color: #f4f4f5; border-radius: 6px 6px 0 0; overflow: hidden; display: flex; align-items: center; justify-content: center;";
+
+      const imagen = document.createElement('img');
+      imagen.classList.add('product-image');
+      imagen.alt = producto.nombre;
+      imagen.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+      
+      if (producto.imagenes && producto.imagenes.trim() !== "") {
+        imagen.src = producto.imagenes;
+      } else {
+        imagen.src = "https://via.placeholder.com/300x150?text=Sin+Imagen";
       }
+      imagen.onerror = function() {
+        this.onerror = null; 
+        this.src = "https://via.placeholder.com/300x150?text=Sin+Imagen";
+      };
+
+      contenedorImagen.appendChild(imagen);
+      tarjeta.appendChild(contenedorImagen);
 
       const categoria = document.createElement('span');
       categoria.classList.add('product-cat-tag');
@@ -263,7 +275,7 @@ const searchInput = document.querySelector("#search-input");
 function obtenerProductosActuales() {
   if (!searchInput) return productos;
   const textoBusqueda = searchInput.value.toLowerCase();
-  return productos.filter(producto => 
+  return productos.filter(producto =>
     producto.nombre.toLowerCase().includes(textoBusqueda) ||
     producto.categoria.toLowerCase().includes(textoBusqueda)
   );
@@ -306,7 +318,6 @@ if (botonVaciar) {
 
 
 // Evento Finalizar Venta
-// Listener para controlar cuando mostrar/ocultar el campo de efectivo
 const selectPago = document.querySelector('#select-pago');
 const grupoEfectivo = document.querySelector('#grupo-efectivo');
 const inputRecibido = document.querySelector('#monto-recibido');
@@ -322,7 +333,6 @@ if (selectPago) {
   });
 }
 
-// Evento para calcular el cambio dinámicamente al escribir el dinero recibido
 if (inputRecibido) {
   inputRecibido.addEventListener('input', () => {
     const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
@@ -334,7 +344,6 @@ if (inputRecibido) {
   });
 }
 
-// Evento Finalizar Venta actualizado con Requerimientos 2.1
 const botonFinalizar = document.querySelector('#btn-finalizar');
 
 if (botonFinalizar) {
@@ -369,15 +378,14 @@ if (botonFinalizar) {
       cambio
     };
 
-    // Guardar Venta
-    guardarVentaLocalStorage(nuevaVenta);
+    if (typeof guardarVentaLocalStorage === 'function') {
+        guardarVentaLocalStorage(nuevaVenta);
+    }
 
-    // Muestra la vista tipo factura lista para imprimir/guardar en PDF
     if (typeof imprimirFactura === 'function') {
       imprimirFactura(nuevaVenta);
     }
 
-    // Reinicia el estado de la factura
     factura = [];
     if (inputRecibido) inputRecibido.value = '';
     if (cambioValor) cambioValor.textContent = '$0';
