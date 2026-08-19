@@ -13,7 +13,7 @@ if (obtenerProductosLocalStorage) {
 
   // Render inicial de la tabla CRUD
 renderTablaCRUD(listaProductos);
-
+if (typeof renderHistorial === 'function') renderHistorial();
   // Captura de elementos de navegación
 const btnPos = document.querySelector("#btn-nav-pos");
 const btnProductos = document.querySelector("#btn-nav-productos");
