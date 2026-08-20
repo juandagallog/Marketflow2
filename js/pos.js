@@ -366,12 +366,14 @@ const grupoEfectivo = document.querySelector('#grupo-efectivo');
 const inputRecibido = document.querySelector('#monto-recibido');
 const cambioValor = document.querySelector('#cambio-valor');
 
+// Obtener el total numérico con la misma fórmula global
 function calcularTotalVenta() {
   const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
   const iva = subtotal * 0.19;
   return subtotal + iva;
 }
 
+// Actualizar dinámicamente el valor del cambio
 function actualizarCalculoCambio() {
   if (!inputRecibido || !cambioValor) return;
 
@@ -379,13 +381,29 @@ function actualizarCalculoCambio() {
   const recibido = Number(inputRecibido.value) || 0;
   const cambio = recibido - total;
 
-  cambioValor.textContent = `$${(cambio > 0 ? Math.round(cambio) : 0).toLocaleString('es-CO')}`;
+  // Si no se ha ingresado dinero o no alcanza, el cambio es 0
+  if (recibido === 0 || cambio < 0) {
+    cambioValor.textContent = '$0';
+  } else {
+    cambioValor.textContent = `$${Math.round(cambio).toLocaleString('es-CO')}`;
+  }
 }
 
+// Manejo del cambio de Método de Pago
 if (selectPago) {
   selectPago.addEventListener('change', () => {
+    const esEfectivo = selectPago.value === 'Efectivo';
+    
     if (grupoEfectivo) {
-      grupoEfectivo.classList.toggle('hidden', selectPago.value !== 'Efectivo');
+      // Toggle de clase + estilo explícito para asegurar que se oculte en Nequi/Tarjeta
+      grupoEfectivo.classList.toggle('hidden', !esEfectivo);
+      grupoEfectivo.style.display = esEfectivo ? 'block' : 'none';
+    }
+
+    // Si no es efectivo, limpiamos los valores
+    if (!esEfectivo) {
+      if (inputRecibido) inputRecibido.value = '';
+      if (cambioValor) cambioValor.textContent = '$0';
     }
   });
 }
@@ -428,16 +446,6 @@ if (botonFinalizar) {
       cambio
     };
 
-    let productosInventario = obtenerProductosLocalStorage();
-    factura.forEach(itemFactura => {
-      const productoEncontrado = productosInventario.find(p => p.id === itemFactura.id);
-      if (productoEncontrado) {
-        productoEncontrado.stock -= itemFactura.cantidad;
-        if (productoEncontrado.stock < 0) productoEncontrado.stock = 0;
-      }
-    });
-    guardarProductosLocalStorage(productosInventario);
-    
     guardarVentaLocalStorage(nuevaVenta);
 
     if (typeof imprimirFactura === 'function') {
@@ -445,11 +453,14 @@ if (botonFinalizar) {
     }
 
     factura = [];
-
     if (inputRecibido) inputRecibido.value = '';
     if (cambioValor) cambioValor.textContent = '$0';
     if (selectPago) selectPago.value = 'Efectivo';
-    if (grupoEfectivo) grupoEfectivo.classList.remove('hidden');
+    
+    if (grupoEfectivo) {
+      grupoEfectivo.classList.remove('hidden');
+      grupoEfectivo.style.display = 'block';
+    }
 
     renderizarFactura();
 
@@ -459,6 +470,6 @@ if (botonFinalizar) {
   });
 }
 
-// Inicialización
+// Inicialización de la vista POS
 renderizarProductos(productos);
 renderizarFactura();

@@ -177,11 +177,11 @@ function imprimirFactura(venta) {
           
           <div class="ticket-divider"></div>
           
-          <div class="historial-card-footer">
+          <div class="ticket-actions">
             <button type="button" class="btn-imprimir-factura" onclick="window.print()">
               🖨️ Imprimir Factura
             </button>
-          </div>
+          </div> 
         </div>
       </body>
     </html>
