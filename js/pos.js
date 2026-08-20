@@ -1,9 +1,7 @@
-// ARCHIVO PRINCIPAL
+// ARCHIVO PRINCIPAL - POS.JS (Limpio, sin typeof y sin CSS inline)
 
-let productos = obtenerProductosLocalStorage();
 let factura = [];
-let modoVistaLista = true; // false = catálogo normal (cuadrícula), true = lista apilada
-// Mantener esto en true para que la vista default sea lista apilada
+let modoVistaLista = false; // false = catálogo normal (cuadrícula), true = lista apilada
 
 const productGrid = document.querySelector('#product-grid');
 const listaItemsFactura = document.querySelector('#invoice-items-list');
@@ -29,33 +27,31 @@ function renderizarProductos(listaProductos) {
     return;
   }
 
-  // SI EL MODO VISTA ES LISTA
+  // MODO VISTA LISTA
   if (modoVistaLista) {
     const contenedorLista = document.createElement('div');
-    // LA SOLUCIÓN: Se agregó 'grid-column: 1 / -1;' para que ocupe todo el ancho de la pantalla
-    contenedorLista.style.cssText = "grid-column: 1 / -1; width: 100%; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden;";
+    contenedorLista.classList.add('pos-list-container');
 
-    listaProductos.forEach((producto, index) => {
+    listaProductos.forEach((producto) => {
       const fila = document.createElement('div');
-      const bordeInferior = index < listaProductos.length - 1 ? "border-bottom: 1px solid #eee;" : "";
-      fila.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; ${bordeInferior} gap: 15px; flex-wrap: wrap;`;
+      fila.classList.add('pos-list-row');
       
       fila.innerHTML = `
-        <div style="flex: 2; display: flex; flex-direction: column; gap: 4px; min-width: 200px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="product-cat-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #fef3c7; color: #d97706; border-radius: 4px; font-weight: bold;">${producto.categoria}</span>
-            <h4 style="margin: 0; font-size: 1rem; color: #333;">${producto.nombre}</h4>
+        <div class="pos-list-info">
+          <div class="pos-list-header-group">
+            <span class="product-cat-tag">${producto.categoria}</span>
+            <h4 class="pos-list-title">${producto.nombre}</h4>
           </div>
-          <span style="font-size: 0.85rem; color: #666;">${producto.descripcion || ''}</span>
+          <span class="pos-list-desc">${producto.descripcion || ''}</span>
         </div>
 
-        <div style="flex: 1; text-align: right; min-width: 100px;">
-          <span style="font-weight: bold; font-size: 1.1rem; color: #111;">$${producto.precio.toLocaleString('es-CO')}</span>
+        <div class="pos-list-price-container">
+          <span class="pos-list-price">$${producto.precio.toLocaleString('es-CO')}</span>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <input type="number" value="1" min="1" class="cantidad-input" id="cantidad-${producto.id}" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
-          <button type="button" class="btn-añadir-carrito" style="padding: 6px 16px; background-color: #f6ad55; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Agregar</button>
+        <div class="pos-list-actions">
+          <input type="number" value="1" min="1" class="cantidad-input pos-list-input" id="cantidad-${producto.id}">
+          <button type="button" class="btn-añadir-carrito pos-list-btn">Agregar</button>
         </div>
       `;
 
@@ -72,24 +68,24 @@ function renderizarProductos(listaProductos) {
     productGrid.appendChild(contenedorLista);
 
   } else {
-    // MODO CATÁLOGO NORMAL (Con soporte robusto de imágenes)
+    // MODO CATÁLOGO NORMAL (Cuadrícula)
     listaProductos.forEach(producto => {
       const tarjeta = document.createElement('article');
       tarjeta.classList.add("product-card");
       
       const contenedorImagen = document.createElement('div');
-      contenedorImagen.style.cssText = "width: 100%; height: 150px; background-color: #f4f4f5; border-radius: 6px 6px 0 0; overflow: hidden; display: flex; align-items: center; justify-content: center;";
+      contenedorImagen.classList.add('product-image-container');
 
       const imagen = document.createElement('img');
       imagen.classList.add('product-image');
       imagen.alt = producto.nombre;
-      imagen.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
       
       if (producto.imagenes && producto.imagenes.trim() !== "") {
         imagen.src = producto.imagenes;
       } else {
         imagen.src = "https://via.placeholder.com/300x150?text=Sin+Imagen";
       }
+
       imagen.onerror = function() {
         this.onerror = null; 
         this.src = "https://via.placeholder.com/300x150?text=Sin+Imagen";
@@ -151,12 +147,20 @@ function renderizarProductos(listaProductos) {
 }
 
 function agregarAFactura(productoId, cantidadIngresada) {
+  let productosActuales = obtenerProductosLocalStorage();
+  
+  if (!productosActuales || productosActuales.length === 0) {
+    productosActuales = productosIniciales;
+  }
+
   let cantidad = Number(cantidadIngresada);
   if (cantidad < 1 || isNaN(cantidad)) {
     cantidad = 1;
   }
 
-  const producto = productos.find(p => p.id === productoId);
+  const producto = productosActuales.find(p => p.id === productoId);
+  if (!producto) return;
+
   const productoExistente = factura.find(item => item.id === productoId);
 
   if (productoExistente) {
@@ -274,9 +278,16 @@ function calcularTotales() {
 const searchInput = document.querySelector("#search-input");
 
 function obtenerProductosActuales() {
-  if (!searchInput) return productos;
+  let productosAlmacenados = obtenerProductosLocalStorage();
+  
+  if (!productosAlmacenados || productosAlmacenados.length === 0) {
+    productosAlmacenados = productosIniciales;
+  }
+
+  if (!searchInput) return productosAlmacenados;
+  
   const textoBusqueda = searchInput.value.toLowerCase();
-  return productos.filter(producto =>
+  return productosAlmacenados.filter(producto =>
     producto.nombre.toLowerCase().includes(textoBusqueda) ||
     producto.categoria.toLowerCase().includes(textoBusqueda)
   );
@@ -379,25 +390,17 @@ if (botonFinalizar) {
       cambio
     };
 
-    if (typeof guardarVentaLocalStorage === 'function') {
-        guardarVentaLocalStorage(nuevaVenta);
-    }
-
-    if (typeof imprimirFactura === 'function') {
-      imprimirFactura(nuevaVenta);
-    }
+    guardarVentaLocalStorage(nuevaVenta);
+    imprimirFactura(nuevaVenta);
 
     factura = [];
     if (inputRecibido) inputRecibido.value = '';
     if (cambioValor) cambioValor.textContent = '$0';
     renderizarFactura();
-
-    if (typeof renderHistorial === 'function') {
-      renderHistorial();
-    }
+    renderHistorial();
  });
 }
 
-// Inicialización
-renderizarProductos(productos);
+// Inicialización limpia
+renderizarProductos(obtenerProductosActuales());
 renderizarFactura();
