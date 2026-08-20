@@ -1,9 +1,10 @@
-/* HISTORIAL DE VENTAS: JERO
+/* HISTORIAL DE VENTAS:
 listar ventas
 mostrar detalle
 mostrar factura
 imprimir
 */
+
 function renderHistorial() {
   const historialContainer = document.querySelector('#historial-container');
   if (!historialContainer) return;
@@ -12,7 +13,7 @@ function renderHistorial() {
   historialContainer.innerHTML = "";
 
   if (ventas.length === 0) {
-    historialContainer.innerHTML = `<p style="text-align:center; padding: 20px; color: #776a5f;">No hay ventas en el historial.</p>`;
+    historialContainer.innerHTML = `<p class="historial-vacio">No hay ventas en el historial.</p>`;
     return;
   }
 
@@ -21,26 +22,26 @@ function renderHistorial() {
     card.classList.add('historial-card');
 
     card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+      <div class="historial-card-header">
         <div>
           <strong>N° ${venta.id}</strong>
-          <p style="font-size: 0.85rem; color: #666; margin:0;">${venta.fecha}</p>
+          <p class="historial-card-fecha">${venta.fecha}</p>
         </div>
         <strong>$${venta.total.toLocaleString('es-CO')}</strong>
       </div>
-      <div style="margin-bottom: 10px;">
-        <p style="font-size: 0.9rem; font-weight: bold;">Detalle de la compra:</p>
-        <ul style="list-style: none; padding-left: 0; font-size: 0.85rem;">
+      <div class="historial-card-body">
+        <p class="historial-card-titulo-detalle">Detalle de la compra:</p>
+        <ul class="historial-card-lista">
           ${venta.items.map(item => `
-            <li style="display:flex; justify-content:space-between;">
+            <li class="historial-card-item">
               <span>${item.nombre} (x${item.cantidad})</span>
               <span>$${(item.precio * item.cantidad).toLocaleString('es-CO')}</span>
             </li>
           `).join('')}
         </ul>
       </div>
-      <div style="display:flex; justify-content:flex-end;">
-        <button type="button" class="btn-imprimir-factura" style="padding: 6px 12px; cursor: pointer;">🖨️ Imprimir Factura</button>
+      <div class="historial-card-footer">
+        <button type="button" class="btn-imprimir-factura">🖨️ Imprimir Factura</button>
       </div>
     `;
 

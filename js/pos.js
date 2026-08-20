@@ -368,10 +368,8 @@ const cambioValor = document.querySelector('#cambio-valor');
 
 if (selectPago) {
   selectPago.addEventListener('change', () => {
-    if (selectPago.value === 'Efectivo') {
-      grupoEfectivo.style.display = 'flex';
-    } else {
-      grupoEfectivo.style.display = 'none';
+    if (grupoEfectivo) {
+      grupoEfectivo.classList.toggle('hidden', selectPago.value !== 'Efectivo');
     }
   });
 }
@@ -383,7 +381,9 @@ if (inputRecibido) {
     const recibido = Number(inputRecibido.value) || 0;
     const cambio = recibido - total;
 
-    cambioValor.textContent = `$${(cambio > 0 ? cambio : 0).toLocaleString('es-CO')}`;
+    if (cambioValor) {
+      cambioValor.textContent = `$${(cambio > 0 ? cambio : 0).toLocaleString('es-CO')}`;
+    }
   });
 }
 
@@ -422,16 +422,25 @@ if (botonFinalizar) {
     };
 
     guardarVentaLocalStorage(nuevaVenta);
-    imprimirFactura(nuevaVenta);
+
+    if (typeof imprimirFactura === 'function') {
+      imprimirFactura(nuevaVenta);
+    }
 
     factura = [];
     if (inputRecibido) inputRecibido.value = '';
     if (cambioValor) cambioValor.textContent = '$0';
+    if (selectPago) selectPago.value = 'Efectivo';
+    if (grupoEfectivo) grupoEfectivo.classList.remove('hidden');
+
     renderizarFactura();
-    renderHistorial();
- });
+
+    if (typeof renderHistorial === 'function') {
+      renderHistorial();
+    }
+  });
 }
 
-// Inicialización limpia
-renderizarProductos(obtenerProductosActuales());
+// Inicialización
+renderizarProductos(productos);
 renderizarFactura();
