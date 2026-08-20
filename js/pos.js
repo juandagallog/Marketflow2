@@ -1,8 +1,9 @@
-// ARCHIVO PRINCIPAL - POS.JS (Corrección de ancho en Vista de Lista)
+// ARCHIVO PRINCIPAL
 
 let productos = obtenerProductosLocalStorage();
 let factura = [];
-let modoVistaLista = false; // false = catálogo normal (cuadrícula), true = lista apilada
+let modoVistaLista = true; // false = catálogo normal (cuadrícula), true = lista apilada
+// Mantener esto en true para que la vista default sea lista apilada
 
 const productGrid = document.querySelector('#product-grid');
 const listaItemsFactura = document.querySelector('#invoice-items-list');
