@@ -366,6 +366,22 @@ const grupoEfectivo = document.querySelector('#grupo-efectivo');
 const inputRecibido = document.querySelector('#monto-recibido');
 const cambioValor = document.querySelector('#cambio-valor');
 
+function calcularTotalVenta() {
+  const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+  const iva = subtotal * 0.19;
+  return subtotal + iva;
+}
+
+function actualizarCalculoCambio() {
+  if (!inputRecibido || !cambioValor) return;
+
+  const total = calcularTotalVenta();
+  const recibido = Number(inputRecibido.value) || 0;
+  const cambio = recibido - total;
+
+  cambioValor.textContent = `$${(cambio > 0 ? Math.round(cambio) : 0).toLocaleString('es-CO')}`;
+}
+
 if (selectPago) {
   selectPago.addEventListener('change', () => {
     if (grupoEfectivo) {
@@ -375,16 +391,7 @@ if (selectPago) {
 }
 
 if (inputRecibido) {
-  inputRecibido.addEventListener('input', () => {
-    const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-    const total = subtotal * 1.19;
-    const recibido = Number(inputRecibido.value) || 0;
-    const cambio = recibido - total;
-
-    if (cambioValor) {
-      cambioValor.textContent = `$${(cambio > 0 ? cambio : 0).toLocaleString('es-CO')}`;
-    }
-  });
+  inputRecibido.addEventListener('input', actualizarCalculoCambio);
 }
 
 const botonFinalizar = document.querySelector('#btn-finalizar');
