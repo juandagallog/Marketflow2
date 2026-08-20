@@ -386,6 +386,41 @@ main {
   font-weight: 900;
 }
 
+.payment-section {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#grupo-efectivo {
+  display: flex;
+}
+
+.label-bold {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.input-pago {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  outline: none;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.input-pago:focus {
+  border-color: var(--color-primary);
+}
+
+.cambio-text {
+  margin-top: 4px;
+  font-weight: bold;
+}
+
 .invoice-actions {
   margin-top: 16px;
   display: flex;
@@ -520,6 +555,57 @@ main {
   padding: 16px;
   border-radius: 10px;
   background-color: var(--color-bg);
+}
+
+.historial-vacio {
+  text-align: center;
+  padding: 20px;
+  color: #776a5f;
+}
+
+.historial-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.historial-card-fecha {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+}
+
+.historial-card-body {
+  margin-bottom: 10px;
+}
+
+.historial-card-titulo-detalle {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.historial-card-lista {
+  list-style: none;
+  padding-left: 0;
+  font-size: 0.85rem;
+}
+
+.historial-card-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.historial-card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-imprimir-factura {
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 /* ==========================================
