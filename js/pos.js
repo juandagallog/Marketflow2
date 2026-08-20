@@ -1,5 +1,6 @@
-// ARCHIVO PRINCIPAL - POS.JS (Limpio, sin typeof y sin CSS inline)
+// ARCHIVO PRINCIPAL - POS.JS
 
+let productos = obtenerProductosLocalStorage();
 let factura = [];
 let modoVistaLista = false; // false = catálogo normal (cuadrícula), true = lista apilada
 
@@ -147,31 +148,44 @@ function renderizarProductos(listaProductos) {
 }
 
 function agregarAFactura(productoId, cantidadIngresada) {
-  let productosActuales = obtenerProductosLocalStorage();
-  
-  if (!productosActuales || productosActuales.length === 0) {
-    productosActuales = productosIniciales;
-  }
 
   let cantidad = Number(cantidadIngresada);
+
   if (cantidad < 1 || isNaN(cantidad)) {
     cantidad = 1;
   }
 
-  const producto = productosActuales.find(p => p.id === productoId);
+  const producto = productos.find(p => p.id === productoId);
+  // Si no existe un producto con el id
   if (!producto) return;
 
   const productoExistente = factura.find(item => item.id === productoId);
 
+  let cantidadActual = 0;
+
   if (productoExistente) {
-    productoExistente.cantidad += cantidad;
-  } else {
-    factura.push({
-      ...producto,
-      cantidad: cantidad
-    });
+    // Cantidad en la factura
+    cantidadActual = productoExistente.cantidad
   }
-  renderizarFactura();
+  
+  const cantidadFinal = cantidadActual + cantidad;
+
+  if (producto.trackStock && cantidadFinal > producto.stock){
+  mostrarNotificacion( `Stock insuficiente. Solo hay ${producto.stock} unidades disponibles.`,"error");
+    return;
+  }
+
+
+    if (productoExistente) {
+        productoExistente.cantidad += cantidad;
+    } else {
+        factura.push({
+            ...producto,
+            cantidad: cantidad
+        });
+    }
+    
+    renderizarFactura();
 }
 
 
@@ -244,16 +258,31 @@ function renderizarFactura() {
 
 
 function cambiarCantidad(productoId, cambio) {
-  const producto = factura.find(item => item.id === productoId);
+    const producto = factura.find(item => item.id === productoId);
 
-  if (!producto) return;
+    if (!producto) return;
 
-  const nuevaCantidad = producto.cantidad + cambio;
+    const nuevaCantidad = producto.cantidad + cambio;
 
-  if (nuevaCantidad < 1) return;
+    if (nuevaCantidad < 1) return;
 
-  producto.cantidad = nuevaCantidad;
-  renderizarFactura();
+    const productoInventario = productos.find(p => p.id === productoId);
+
+    if (
+        cambio > 0 &&
+        productoInventario &&
+        productoInventario.trackStock &&
+        nuevaCantidad > productoInventario.stock
+    ) {
+        mostrarNotificacion(
+            `No puedes superar el stock disponible (${productoInventario.stock}).`,
+            "error"
+        );
+        return;
+    }
+
+    producto.cantidad = nuevaCantidad;
+    renderizarFactura();
 }
 
 
@@ -280,6 +309,7 @@ const searchInput = document.querySelector("#search-input");
 function obtenerProductosActuales() {
   let productosAlmacenados = obtenerProductosLocalStorage();
   
+  // SI no existe el array de productos, o esta vacio
   if (!productosAlmacenados || productosAlmacenados.length === 0) {
     productosAlmacenados = productosIniciales;
   }
@@ -289,7 +319,8 @@ function obtenerProductosActuales() {
   const textoBusqueda = searchInput.value.toLowerCase();
   return productosAlmacenados.filter(producto =>
     producto.nombre.toLowerCase().includes(textoBusqueda) ||
-    producto.categoria.toLowerCase().includes(textoBusqueda)
+    producto.categoria.toLowerCase().includes(textoBusqueda) ||
+    producto.codigo.toLocaleString().includes(textoBusqueda)
   );
 }
 
