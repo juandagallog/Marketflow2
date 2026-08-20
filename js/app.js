@@ -1,18 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  // Cargar lista de productos con tu if / else tradicional
-let listaProductos = [];
-
-if (obtenerProductosLocalStorage) {
-    listaProductos = obtenerProductosLocalStorage();
-} else if (productos) {
-    listaProductos = productos;
-} else {
-    listaProductos = [];
-}
 
   // Render inicial de la tabla CRUD
-renderTablaCRUD(listaProductos);
+renderTablaCRUD(productos);
 if (typeof renderHistorial === 'function') renderHistorial();
   // Captura de elementos de navegación
 const btnPos = document.querySelector("#btn-nav-pos");
@@ -41,7 +31,7 @@ function mostrarVista(vistaAMostrar, botonActivo) {
 btnPos.addEventListener("click", () => mostrarVista(vistaPos, btnPos));
 btnProductos.addEventListener("click", () => {
     mostrarVista(vistaProductos, btnProductos);
-    renderTablaCRUD(listaProductos);
+    renderTablaCRUD(productos);
 });
 btnHistorial.addEventListener("click", () => {
     mostrarVista(vistaHistorial, btnHistorial);
@@ -49,21 +39,20 @@ btnHistorial.addEventListener("click", () => {
 });
   // Eventos para Modales y CRUD de Productos
 document.querySelector('#btn-new-product').addEventListener('click', () => {
-    openProductModal(null, listaProductos);
+    openProductModal(null, productos);
 });
 
 document.getElementById('product-form').addEventListener('submit', (e) => {
-    handleFormSubmit(e, listaProductos);
-    renderizarProductos(listaProductos);
+    handleFormSubmit(e, productos);
 });
 
 document.getElementById('confirm-delete-btn').addEventListener('click', () => {
     const id = getProductoAEliminarId();
     if (id) {
-    listaProductos = listaProductos.filter(p => p.id !== id);
-    guardarProductosLocalStorage(listaProductos);
-    renderTablaCRUD(listaProductos);
-    renderizarProductos(listaProductos);
+    productos = productos.filter(p => p.id !== id);
+    guardarProductosLocalStorage(productos);
+    renderTablaCRUD(productos);
+    renderizarProductos(productos);
     closeDeleteModal();
     }
 });

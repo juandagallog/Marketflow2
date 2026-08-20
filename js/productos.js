@@ -90,7 +90,7 @@ if (productId) {
     // INICIA EL MODO DE CREAR
     document.getElementById('modal-title').textContent = "Nuevo Producto";
     document.getElementById('product-id').value = "";
-    document.getElementById('product-code').value = `PROD-${String(listaProductos.length + 1).padStart(3, '0')}`;
+    document.getElementById('product-code').value = generarCodigoProducto(listaProductos);
     document.getElementById('product-stock').disabled = true;
 }
 
@@ -99,55 +99,76 @@ modal.classList.remove('hidden');
 
 // Procesa el envío del formulario (Crear o Modificar en el arreglo)
 function handleFormSubmit(event, listaProductos) {
-event.preventDefault();
+    event.preventDefault();
 
-const id = document.getElementById('product-id').value;
-const codigo = document.getElementById('product-code').value;
-const categoria = document.getElementById('product-category').value.trim();
-const nombre = document.getElementById('product-name').value.trim();
-const descripcion = document.getElementById('product-description').value.trim();
-const precio = Number(document.getElementById('product-price').value);
-const costo = Number(document.getElementById('product-cost').value);
-const trackStock = document.getElementById('track-inventory').checked;
-const stock = trackStock ? Number(document.getElementById('product-stock').value || 0) : 0;
+    const id = document.getElementById('product-id').value;
+    const codigo = document.getElementById('product-code').value;
+    const categoria = document.getElementById('product-category').value.trim();
+    const nombre = document.getElementById('product-name').value.trim();
+    const descripcion = document.getElementById('product-description').value.trim();
+    const precio = Number(document.getElementById('product-price').value);
+    const costo = Number(document.getElementById('product-cost').value);
+    const trackStock = document.getElementById('track-inventory').checked;
+    const stock = trackStock ? Number(document.getElementById('product-stock').value || 0) : 0;
 
-if (id) {
-    // Actualiza el producto existente
-    const index = listaProductos.findIndex(p => p.id === Number(id));
-    if (index !== -1) {
-    listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
+    if (id) {
+        // Actualiza el producto existente
+        const index = listaProductos.findIndex(p => p.id === Number(id));
+        if (index !== -1) {
+        listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
+        }
+    } else {
+        // Crear un nuevo producto
+        const nuevoProducto = { id: Date.now(), codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
+        listaProductos.push(nuevoProducto);
     }
-} else {
-    // Crear un nuevo producto
-    const nuevoProducto = { id: Date.now(), codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
-    listaProductos.push(nuevoProducto);
-}
 
-  // Guarda en localStorage si la función existe y refresca la interfaz
+    // Guarda en localStorage si la función existe y refresca la interfaz
 
-guardarProductosLocalStorage(listaProductos);
+    guardarProductosLocalStorage(listaProductos);
 
-closeProductModal();
-renderTablaCRUD(listaProductos);
+    closeProductModal();
+    renderTablaCRUD(listaProductos);
 
-  // Si existe la función de re-renderizar la catálogo POS, la ejecuta
+    // Si existe la función de re-renderizar la catálogo POS, la ejecuta
 
-renderizarProductos(listaProductos);
+    renderizarProductos(listaProductos);
 
-}
+    }
 
 function confirmarEliminacion(id, listaProductos) {
-const prod = listaProductos.find(p => p.id === id);
-if (!prod) return;
+    const prod = listaProductos.find(p => p.id === id);
+    if (!prod) return;
 
-productoAEliminarId = id;
-const nombreElem = document.getElementById('delete-product-name');
-if (nombreElem) nombreElem.textContent = prod.nombre;
+    productoAEliminarId = id;
+    const nombreElem = document.getElementById('delete-product-name');
+    if (nombreElem) nombreElem.textContent = prod.nombre;
 
-const modal = document.getElementById('delete-modal');
-if (modal) modal.classList.remove('hidden');
+    const modal = document.getElementById('delete-modal');
+    if (modal) modal.classList.remove('hidden');
+    }
+
+    function getProductoAEliminarId() {
+    return productoAEliminarId;
 }
 
-function getProductoAEliminarId() {
-return productoAEliminarId;
+function generarCodigoProducto(listaProductos) {
+    let numeroMayor = 0;
+
+    listaProductos.forEach(producto => {
+        // Recorremos cada uno de los productos en la lista, y el guardamos el valor numerico del codigo
+        // Por ejemplo para PROD-08, Se reemplaza por 08, y luego se convierte de string a number.
+        const numero = Number(producto.codigo.replace("PROD-", ""));
+
+        // Verificamos que el numero no sea un NaN (sea un numero valido)
+        // Si el numero que obtuvimos es mayor que el numeroMayor que teniamos, se actualiza
+        if (!isNaN(numero) && numero > numeroMayor) {
+            numeroMayor = numero;
+        }
+    });
+
+    // Retornamos el nuevo codigo, al numero mayor que teniamos le sumamos 1 para el siguiente codigo
+    // padStart garantiza que el texto tenga una longitud de 3 caracteres, añadiendo 0 a la izquierda si es necesario
+    // Por ejemplo, si tenemos 5. El codigo termina siendo PROD-005
+    return `PROD-${String(numeroMayor + 1).padStart(3, '0')}`;
 }
