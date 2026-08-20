@@ -32,10 +32,6 @@ main {
 /* ==========================================
    CLASES UTILITARIAS (OCULTAR ELEMENTOS)
    ========================================== */
-.hidden,
-.vista-oculta {
-  display: none;
-}
 
 /* ==========================================
    ENCABEZADO Y NAVEGACIÓN
@@ -770,4 +766,9 @@ main {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.hidden,
+.vista-oculta {
+  display: none;
 }
