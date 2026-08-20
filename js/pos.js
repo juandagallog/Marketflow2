@@ -307,21 +307,15 @@ function calcularTotales() {
 const searchInput = document.querySelector("#search-input");
 
 function obtenerProductosActuales() {
-  let productosAlmacenados = obtenerProductosLocalStorage();
-  
-  // SI no existe el array de productos, o esta vacio
-  if (!productosAlmacenados || productosAlmacenados.length === 0) {
-    productosAlmacenados = productosIniciales;
-  }
+    if (!searchInput) return productos;
 
-  if (!searchInput) return productosAlmacenados;
-  
-  const textoBusqueda = searchInput.value.toLowerCase();
-  return productosAlmacenados.filter(producto =>
-    producto.nombre.toLowerCase().includes(textoBusqueda) ||
-    producto.categoria.toLowerCase().includes(textoBusqueda) ||
-    producto.codigo.toLocaleString().includes(textoBusqueda)
-  );
+    const textoBusqueda = searchInput.value.toLowerCase();
+
+    return productos.filter(producto =>
+        producto.nombre.toLowerCase().includes(textoBusqueda) ||
+        producto.categoria.toLowerCase().includes(textoBusqueda) ||
+        producto.codigo.toLowerCase().includes(textoBusqueda)
+    );
 }
 
 if (searchInput) {
@@ -424,15 +418,72 @@ if (botonFinalizar) {
     const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
     const iva = subtotal * 0.19;
     const total = subtotal + iva;
-    const metodoPago = selectPago ? selectPago.value : 'Efectivo';
-    const recibido = metodoPago === 'Efectivo' ? (Number(inputRecibido.value) || 0) : total;
+    const metodoPago = selectPago.value;
 
-    if (metodoPago === 'Efectivo' && recibido < total) {
-      alert('El monto recibido es menor al total de la venta.');
-      return;
+    let recibido = 0;
+    let cambio = 0;
+    let saldoPendiente = 0;
+
+    // Para pagos en efectivo:
+    if (metodoPago === "Efectivo") {
+        recibido = Number(inputRecibido.value);
+
+        // Si el usuario no escribió un número válido
+        if (isNaN(recibido)) {
+            recibido = 0;
+        }
+
+        // No dejamos cerrar la venta si falta dinero
+        if (recibido < total) {
+            mostrarNotificacion(
+                "El monto recibido es menor al total de la venta.",
+                "error"
+            );
+            return;
+        }
+
+        cambio = recibido - total;
     }
 
-    const cambio = metodoPago === 'Efectivo' ? (recibido - total) : 0;
+    // Para nequi
+    if (metodoPago === "Nequi") {
+        // Suponemos que el vendedor confirmó que recibió el valor total por Nequi
+        recibido = total;
+        cambio = 0;
+    }
+
+    // DEBE
+    if (metodoPago === "Debe") {
+        // El cliente no paga ahora, todo queda como deuda
+        recibido = 0;
+        cambio = 0;
+        saldoPendiente = total;
+    }
+
+    let stockValido = true;
+
+    factura.forEach(itemVenta => {
+        const productoInventario = productos.find(
+            producto => producto.id === itemVenta.id
+        );
+
+        if (productoInventario) {
+            if (productoInventario.trackStock) {
+                if (itemVenta.cantidad > productoInventario.stock) {
+                    stockValido = false;
+
+                    mostrarNotificacion(
+                        `No hay stock suficiente de ${productoInventario.nombre}.`,
+                        "error"
+                    );
+                }
+            }
+        }
+    });
+
+    if (stockValido === false) {
+        return;
+    }
 
     const nuevaVenta = {
       id: `FAC-${Date.now()}`,
@@ -443,10 +494,27 @@ if (botonFinalizar) {
       total,
       metodoPago,
       recibido,
-      cambio
+      cambio,
+      saldoPendiente
     };
 
     guardarVentaLocalStorage(nuevaVenta);
+
+    factura.forEach(itemVenta => {
+        const productoInventario = productos.find(
+            producto => producto.id === itemVenta.id
+        );
+
+        if (productoInventario && productoInventario.trackStock) {
+            productoInventario.stock -= itemVenta.cantidad;
+        }
+    });
+
+    guardarProductosLocalStorage(productos);
+
+    renderizarProductos(productos);
+    renderTablaCRUD(productos);
+
 
     if (typeof imprimirFactura === 'function') {
       imprimirFactura(nuevaVenta);

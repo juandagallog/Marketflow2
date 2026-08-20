@@ -67,3 +67,8 @@ document.getElementById('btn-cancel-delete-modal').addEventListener('click', clo
 document.getElementById('track-inventory').addEventListener('change', toggleStockField);
 
 });
+
+
+function mostrarNotificacion(mensaje, tipo = "info") {
+    alert(mensaje);
+}
