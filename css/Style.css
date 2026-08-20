@@ -34,7 +34,7 @@ main {
    ========================================== */
 .hidden,
 .vista-oculta {
-  display: none !important;
+  display: none;
 }
 
 /* ==========================================
