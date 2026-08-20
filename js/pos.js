@@ -421,10 +421,21 @@ if (botonFinalizar) {
       cambio
     };
 
+    let productosInventario = obtenerProductosLocalStorage();
+    factura.forEach(itemFactura => {
+      const productoEncontrado = productosInventario.find(p => p.id === itemFactura.id);
+      if (productoEncontrado) {
+        productoEncontrado.stock -= itemFactura.cantidad;
+        if (productoEncontrado.stock < 0) productoEncontrado.stock = 0;
+      }
+    });
+    guardarProductosLocalStorage(productosInventario);
+    
     guardarVentaLocalStorage(nuevaVenta);
     imprimirFactura(nuevaVenta);
 
     factura = [];
+
     if (inputRecibido) inputRecibido.value = '';
     if (cambioValor) cambioValor.textContent = '$0';
     renderizarFactura();
