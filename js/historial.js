@@ -175,13 +175,12 @@ function imprimirFactura(venta) {
           </div>
           ${bloqueEfectivo}
           
-          <div class="ticket-divider"></div>
-          
+          <!-- BOTÓN CENTRADO Y OCULTO EN IMPRESIÓN -->
           <div class="ticket-actions">
             <button type="button" class="btn-imprimir-factura" onclick="window.print()">
               🖨️ Imprimir Factura
             </button>
-          </div> 
+          </div>
         </div>
       </body>
     </html>
