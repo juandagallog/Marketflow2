@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   // Cargar lista de productos con tu if / else tradicional
-let listaProductos = [];
+
 
 if (obtenerProductosLocalStorage) {
     listaProductos = obtenerProductosLocalStorage();
