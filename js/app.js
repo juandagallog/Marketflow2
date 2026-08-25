@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render inicial de la tabla CRUD
 renderTablaCRUD(productos);
-if (typeof renderHistorial === 'function') renderHistorial();
+renderHistorial();
   // Captura de elementos de navegación
 const btnPos = document.querySelector("#btn-nav-pos");
 const btnProductos = document.querySelector("#btn-nav-productos");
@@ -35,7 +35,7 @@ btnProductos.addEventListener("click", () => {
 });
 btnHistorial.addEventListener("click", () => {
     mostrarVista(vistaHistorial, btnHistorial);
-    if (typeof renderHistorial === 'function') renderHistorial();
+    renderHistorial();
 });
   // Eventos para Modales y CRUD de Productos
 document.querySelector('#btn-new-product').addEventListener('click', () => {
@@ -49,6 +49,13 @@ document.getElementById('product-form').addEventListener('submit', (e) => {
 document.getElementById('confirm-delete-btn').addEventListener('click', () => {
     const id = getProductoAEliminarId();
     if (id) {
+
+      const productoEnFactura = factura.find (item => item.id === id);
+      if (productoEnFactura){
+        mostrarNotificacion("No puedes eliminar un producto que esta en la venta actual", "error")
+        closeDeleteModal();
+        return;
+      }
     productos = productos.filter(p => p.id !== id);
     guardarProductosLocalStorage(productos);
     renderTablaCRUD(productos);
@@ -69,6 +76,18 @@ document.getElementById('track-inventory').addEventListener('change', toggleStoc
 });
 
 
-function mostrarNotificacion(mensaje, tipo = "info") {
-    alert(mensaje);
+function mostrarNotificacion(mensaje, tipo) {
+    const notificacion = document.querySelector("#notificacion");
+
+    notificacion.textContent = mensaje;
+
+    notificacion.classList.remove("hidden");
+    notificacion.classList.remove("error");
+    notificacion.classList.remove("exito");
+
+    notificacion.classList.add(tipo);
+
+    setTimeout(() => {
+        notificacion.classList.add("hidden");
+    }, 3000);
 }

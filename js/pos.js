@@ -2,7 +2,7 @@
 
 let productos = obtenerProductosLocalStorage();
 let factura = [];
-let modoVistaLista = false; // false = catálogo normal (cuadrícula), true = lista apilada
+let modoVistaLista = true; // false = catálogo normal (cuadrícula), true = lista apilada
 
 const productGrid = document.querySelector('#product-grid');
 const listaItemsFactura = document.querySelector('#invoice-items-list');
@@ -24,7 +24,7 @@ function renderizarProductos(listaProductos) {
   }
 
   if (listaProductos.length === 0) {
-    productGrid.innerHTML = `<p class="empty-list-message" style="grid-column: 1 / -1; text-align: center; padding: 20px;">No hay productos disponibles.</p>`;
+    productGrid.innerHTML = `<p class="empty-list-message">No hay productos disponibles.</p>`;
     return;
   }
 
@@ -384,23 +384,17 @@ function actualizarCalculoCambio() {
 }
 
 // Manejo del cambio de Método de Pago
-if (selectPago) {
-  selectPago.addEventListener('change', () => {
-    const esEfectivo = selectPago.value === 'Efectivo';
-    
-    if (grupoEfectivo) {
-      // Toggle de clase + estilo explícito para asegurar que se oculte en Nequi/Tarjeta
-      grupoEfectivo.classList.toggle('hidden', !esEfectivo);
-      grupoEfectivo.style.display = esEfectivo ? 'block' : 'none';
-    }
+selectPago.addEventListener("change", () => {
 
-    // Si no es efectivo, limpiamos los valores
-    if (!esEfectivo) {
-      if (inputRecibido) inputRecibido.value = '';
-      if (cambioValor) cambioValor.textContent = '$0';
+    if (selectPago.value === "Efectivo") {
+        grupoEfectivo.classList.remove("hidden");
+    } else {
+        grupoEfectivo.classList.add("hidden");
+
+        inputRecibido.value = "";
+        cambioValor.textContent = "$0";
     }
-  });
-}
+});
 
 if (inputRecibido) {
   inputRecibido.addEventListener('input', actualizarCalculoCambio);
@@ -411,7 +405,7 @@ const botonFinalizar = document.querySelector('#btn-finalizar');
 if (botonFinalizar) {
   botonFinalizar.addEventListener('click', () => {
     if (factura.length === 0) {
-      alert('La factura está vacía.');
+      mostrarNotificacion("La factura está vacía.","error");
       return;
     }
 
@@ -514,29 +508,23 @@ if (botonFinalizar) {
 
     renderizarProductos(productos);
     renderTablaCRUD(productos);
-
-
-    if (typeof imprimirFactura === 'function') {
-      imprimirFactura(nuevaVenta);
-    }
+    mostrarNotificacion("Venta registrada con exito", "exito")
+    imprimirFactura(nuevaVenta);
+    
 
     factura = [];
-    if (inputRecibido) inputRecibido.value = '';
-    if (cambioValor) cambioValor.textContent = '$0';
-    if (selectPago) selectPago.value = 'Efectivo';
-    
-    if (grupoEfectivo) {
-      grupoEfectivo.classList.remove('hidden');
-      grupoEfectivo.style.display = 'block';
-    }
+    inputRecibido.value = "";
+    cambioValor.textContent = "$0";
+    selectPago.value = "Efectivo";
+    grupoEfectivo.classList.remove("hidden");
 
     renderizarFactura();
 
-    if (typeof renderHistorial === 'function') {
-      renderHistorial();
-    }
+    renderHistorial();
+    
   });
 }
+
 
 // Inicialización de la vista POS
 renderizarProductos(productos);

@@ -14,6 +14,11 @@ if (!productsTableBody) return;
 productsTableBody.innerHTML = "";
 
 listaProductos.forEach(prod => {
+    let textoStock = "No aplica";
+
+    if (prod.trackStock) {
+        textoStock = `${prod.stock} un.`;
+    }
     const tr = document.createElement('tr');
     tr.innerHTML = `
     <td><strong>${prod.codigo}</strong></td>
@@ -21,7 +26,7 @@ listaProductos.forEach(prod => {
     <td>${prod.categoria}</td>
     <td>$${prod.precio.toLocaleString('es-CO')}</td>
     <td>$${(prod.costo || 0).toLocaleString('es-CO')}</td>
-    <td>${prod.trackStock ? `${prod.stock} un.` : 'No aplica'}</td>
+    <td>${textoStock}</td>
     <td>
         <button type="button" class="btn-editar" data-id="${prod.id}">✏️</button>
         <button type="button" class="btn-eliminar" data-id="${prod.id}">🗑️</button>
@@ -48,8 +53,10 @@ if (modal) modal.classList.add('hidden');
 
 // Cierra el modal de confirmación de eliminación
 function closeDeleteModal() {
-const modal = document.getElementById('delete-modal');
-if (modal) modal.classList.add('hidden');
+    const modal = document.getElementById('delete-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 }
 
 // Habilita o deshabilita el campo de stock según el checkbox
@@ -85,7 +92,13 @@ if (productId) {
     document.getElementById('product-cost').value = prod.costo;
     document.getElementById('track-inventory').checked = prod.trackStock;
     document.getElementById('product-stock').disabled = !prod.trackStock;
-    document.getElementById('product-stock').value = prod.trackStock ? prod.stock : "";
+    if (prod.trackStock) {
+        document.getElementById("product-stock").value = prod.stock;
+    }
+    else {
+        document.getElementById("product-stock").value = "";
+    }
+
 } else {
     // INICIA EL MODO DE CREAR
     document.getElementById('modal-title').textContent = "Nuevo Producto";
@@ -109,13 +122,48 @@ function handleFormSubmit(event, listaProductos) {
     const precio = Number(document.getElementById('product-price').value);
     const costo = Number(document.getElementById('product-cost').value);
     const trackStock = document.getElementById('track-inventory').checked;
-    const stock = trackStock ? Number(document.getElementById('product-stock').value || 0) : 0;
+    let stock = 0;
+
+    if (trackStock) {
+        stock = Number(document.getElementById("product-stock").value);
+    }
+
+    if (trackStock && isNaN(stock)) {
+        mostrarNotificacion("Debes ingresar una cantidad de stock.", "error");
+        return;
+    }
+    if (nombre === "" || categoria === "") {
+        mostrarNotificacion("Nombre y categoría son obligatorios.", "error");
+        return;
+    }
+
+    if (precio < 0 || costo < 0) {
+        mostrarNotificacion("El precio y el costo no pueden ser negativos.", "error");
+        return;
+    }
+
+    if (trackStock && stock < 0) {
+        mostrarNotificacion("El stock no puede ser negativo.", "error");
+        return;
+    }
 
     if (id) {
         // Actualiza el producto existente
         const index = listaProductos.findIndex(p => p.id === Number(id));
         if (index !== -1) {
-        listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
+            listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
+
+            const productoEnFactura = factura.find(item => item.id === Number(id));
+            if (productoEnFactura){
+                productoEnFactura.codigo = codigo;
+                productoEnFactura.nombre = nombre;
+                productoEnFactura.categoria = categoria;
+                productoEnFactura.descripcion = descripcion;
+                productoEnFactura.precio = precio;
+
+                renderizarFactura();
+
+            }
         }
     } else {
         // Crear un nuevo producto
@@ -133,6 +181,7 @@ function handleFormSubmit(event, listaProductos) {
     // Si existe la función de re-renderizar la catálogo POS, la ejecuta
 
     renderizarProductos(listaProductos);
+    mostrarNotificacion("Producto guardado con exito", "exito")
 
     }
 

@@ -90,6 +90,14 @@ function renderHistorial() {
       cardPago.appendChild(cambioText);
     }
 
+    if(venta.metodoPago === "Debe"){
+      const deudaText = document.createElement("p");
+      deudaText.classList.add("historial-pago-info");
+      deudaText.textContent = `Saldo pendiente: $${venta.saldoPendiente.toLocaleString("es-CO")}`;
+      cardPago.appendChild(deudaText);
+
+    }
+
     cardBody.appendChild(cardPago);
 
     // Footer con botón de reimpresión
@@ -140,6 +148,17 @@ function imprimirFactura(venta) {
     `;
   }
 
+  let bloqueDeuda = "";
+
+  if (metodoPago === "Debe") {
+      bloqueDeuda = `
+        <div class="ticket-row">
+          <span>Saldo pendiente:</span>
+          <span>$${venta.saldoPendiente.toLocaleString("es-CO")}</span>
+        </div>
+      `;
+  }
+
   ventana.document.write(`
     <!DOCTYPE html>
     <html lang="es">
@@ -174,6 +193,7 @@ function imprimirFactura(venta) {
             <span>${metodoPago}</span>
           </div>
           ${bloqueEfectivo}
+          ${bloqueDeuda}
           
           <!-- BOTÓN CENTRADO Y OCULTO EN IMPRESIÓN -->
           <div class="ticket-actions">
