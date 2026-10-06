@@ -1,15 +1,86 @@
-/* HISTORIAL DE VENTAS:
-listar ventas
-mostrar detalle
-mostrar factura
-imprimir
-*/
+function adaptarVentaRemota(venta) {
+  let items = [];
 
-function renderHistorial() {
+  try {
+    items = typeof venta.itemsJson === "string"
+      ? JSON.parse(venta.itemsJson)
+      : venta.itemsJson || [];
+  } catch {
+    throw new Error("La venta " + venta.id + " contiene itemsJson inválido.");
+  }
+  if (!Array.isArray(items)) throw new Error("Las líneas de la venta deben ser una lista.");
+
+  const subtotal = Math.round(Number(venta.subtotal) || 0);
+  const iva = Math.round(subtotal * 0.19);
+  const total = subtotal + iva;
+  const recibido = Math.round(Number(venta.valorRecibido) || 0);
+  return {
+    ...venta,
+
+    items,
+
+    subtotal, total, iva, recibido,
+    cambio: venta.metodoPago === 'Efectivo' ? Math.max(0, total <= recibido ? recibido - total : 0) : 0,
+    saldoPendiente: venta.metodoPago === 'Debe' ? total - recibido : 0
+  };
+}
+
+let historialEnCarga = null;
+
+async function renderHistorial(refrescarTrasCarga = false) {
+  if (historialEnCarga) {
+    await historialEnCarga;
+    if (!refrescarTrasCarga) return;
+  }
+  historialEnCarga = cargarYRenderizarHistorial();
+  try { await historialEnCarga; }
+  finally { historialEnCarga = null; }
+}
+
+async function cargarYRenderizarHistorial() {
   const historialContainer = document.querySelector('#historial-container');
   if (!historialContainer) return;
 
-  const ventas = obtenerVentasLocalStorage();
+  const quitarHistorial = mostrarSkeleton(historialContainer, 'tarjetas');
+  const quitarAbiertas = mostrarSkeleton(document.getElementById('ventas-abiertas-container'), 'tarjetas');
+  let ventas = [];
+  let abiertas = [];
+
+  try {
+    const datos = await apiGet("ventas");
+    abiertas = datos.filter(venta => venta.estado === 'abierta').map(adaptarVentaRemota);
+
+    ventas = datos
+      .filter(venta => venta.estado === "cerrada")
+      .map(adaptarVentaRemota);
+
+  } catch (error) {
+    mostrarNotificacion(
+      "Error cargando historial: " + error.message,
+      "error"
+    );
+
+    return;
+  } finally { quitarHistorial(); quitarAbiertas(); }
+
+
+  const contenedorAbiertas = document.getElementById('ventas-abiertas-container');
+  contenedorAbiertas.replaceChildren();
+  if (!abiertas.length) {
+    const vacio = document.createElement('p'); vacio.textContent = 'No hay ventas abiertas.';
+    contenedorAbiertas.appendChild(vacio);
+  }
+  abiertas.slice().reverse().forEach(venta => {
+    const card = document.createElement('article'); card.className = 'historial-card';
+    const texto = document.createElement('p');
+    texto.textContent = `${venta.fecha} | ${nombreCliente(venta.clienteId)} | $${venta.total.toLocaleString('es-CO')}`;
+    const boton = document.createElement('button'); boton.type = 'button'; boton.className = 'btn-primary'; boton.textContent = 'Retomar';
+    boton.addEventListener('click', async () => {
+      boton.disabled = true;
+      try { await retomarVentaAbierta(venta.id); } finally { boton.disabled = false; }
+    });
+    card.append(texto, boton); contenedorAbiertas.appendChild(card);
+  });
   historialContainer.innerHTML = "";
 
   if (ventas.length === 0) {
@@ -64,7 +135,7 @@ function renderHistorial() {
       spanNombre.textContent = `${item.nombre} (x${item.cantidad})`;
 
       const spanPrecio = document.createElement('span');
-      spanPrecio.textContent = `$${(item.precio * item.cantidad).toLocaleString('es-CO')}`;
+      spanPrecio.textContent = `$${Math.round(item.precio * item.cantidad).toLocaleString('es-CO')}`;
 
       li.appendChild(spanNombre);
       li.appendChild(spanPrecio);
@@ -108,7 +179,10 @@ function renderHistorial() {
     btnImprimir.type = "button";
     btnImprimir.classList.add('btn-imprimir-factura');
     btnImprimir.textContent = "🖨️ Imprimir Factura";
-    btnImprimir.addEventListener('click', () => imprimirFactura(venta));
+    btnImprimir.addEventListener('click', () => {
+      try { imprimirFactura(venta); }
+      catch (error) { mostrarNotificacion(error.message, "error"); }
+    });
 
     cardFooter.appendChild(btnImprimir);
 
@@ -121,16 +195,18 @@ function renderHistorial() {
 }
 
 function imprimirFactura(venta) {
+  if (venta.itemsJson !== undefined) venta = adaptarVentaRemota(venta);
   const ventana = window.open('', '_blank', 'width=400,height=650');
+  if (!ventana) throw new Error("El navegador bloqueó la ventana de impresión. Permite ventanas emergentes y reimprime desde el historial.");
   
   const metodoPago = venta.metodoPago || 'Efectivo';
-  const recibido = venta.recibido || venta.total;
+  const recibido = venta.recibido ?? venta.total;
   const cambio = venta.cambio || 0;
 
   const filasItems = venta.items.map(i => `
     <div class="ticket-row">
       <span>${i.nombre} x${i.cantidad}</span>
-      <span>$${(i.precio * i.cantidad).toLocaleString('es-CO')}</span>
+      <span>$${Math.round(i.precio * i.cantidad).toLocaleString('es-CO')}</span>
     </div>
   `).join('');
 

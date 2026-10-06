@@ -1,7 +1,61 @@
 // ARCHIVO PRINCIPAL - POS.JS
 
-let productos = obtenerProductosLocalStorage();
+let productos = [];
+let categorias = [];
+let catalogoCargado = false;
+let productosGuardando = false;
+
+// Las propiedades de interfaz son locales; la API mantiene sus nombres oficiales.
+function adaptarProducto(producto) {
+  const categoriaId = String(producto.categoriaId ?? "");
+  return {
+    ...producto, id: String(producto.id), categoriaId,
+    codigo: String(producto.codigo ?? ""), nombre: String(producto.nombre ?? ""),
+    categoria: categorias.find(c => c.id === categoriaId)?.nombre || "Sin categoría",
+    precio: Number(producto.precio), costo: Number(producto.costo), stock: Number(producto.stock),
+    trackStock: producto.seguimientoInventario === true || String(producto.seguimientoInventario).toLowerCase() === "true",
+    descripcion: String(producto.descripcion ?? ""), imagenes: String(producto.imagenes ?? "")
+  };
+}
+
+async function cargarCatalogoRemoto() {
+  const estado = document.getElementById('catalogo-estado');
+  const reintentar = document.getElementById('btn-reintentar-catalogo');
+  const nuevo = document.getElementById('btn-new-product');
+  catalogoCargado = false;
+  nuevo.disabled = true;
+  reintentar.disabled = true;
+  reintentar.classList.add('hidden');
+  estado.textContent = "";
+  const quitarSkeleton = mostrarSkeleton(estado);
+  try {
+    const [datosProductos, datosCategorias] = await Promise.all([apiGet("productos"), apiGet("categorias")]);
+    if (!Array.isArray(datosProductos) || !Array.isArray(datosCategorias)) throw new Error("La API debe devolver listas.");
+    categorias = datosCategorias.map(c => ({ ...c, id: String(c.id), nombre: String(c.nombre) }));
+    productos = datosProductos.map(adaptarProducto);
+    const select = document.getElementById('product-category');
+    select.replaceChildren(new Option("Selecciona una categoría", ""));
+    categorias.forEach(c => select.add(new Option(c.nombre, c.id)));
+    catalogoCargado = true;
+    renderizarProductos(obtenerProductosActuales());
+    renderTablaCRUD(productos);
+    estado.textContent = categorias.length ? "" : "No hay categorías disponibles en el servicio.";
+  } catch (error) {
+    estado.textContent = "No se pudo cargar el catálogo.";
+    reintentar.classList.remove('hidden');
+    mostrarNotificacion(error.message, "error");
+  } finally {
+    quitarSkeleton();
+    nuevo.disabled = !catalogoCargado || categorias.length === 0;
+    reintentar.disabled = false;
+  }
+}
 let factura = [];
+let ventaPendienteId = null;
+let ventaPendiente = null;
+let ventaAbiertaActualId = null;
+let ventaAbiertaActualFecha = null;
+let ventaAbiertaGuardadoPendiente = null;
 let modoVistaLista = true; // false = catálogo normal (cuadrícula), true = lista apilada
 
 const productGrid = document.querySelector('#product-grid');
@@ -17,6 +71,7 @@ const btnCatalogo = document.querySelector("#btn-catalogo");
 
 
 function renderizarProductos(listaProductos) {
+  if (!catalogoCargado) return;
   productGrid.innerHTML = "";
 
   if (contadorProductos) {
@@ -62,6 +117,10 @@ function renderizarProductos(listaProductos) {
       botonAgregar.addEventListener("click", () => {
         agregarAFactura(producto.id, inputCantidad.value);
       });
+      const editar = document.createElement('button');
+      editar.type = 'button'; editar.className = 'btn-editar'; editar.textContent = 'Editar';
+      editar.addEventListener('click', () => openProductModal(producto.id, productos, true));
+      fila.querySelector('.pos-list-actions').appendChild(editar);
 
       contenedorLista.appendChild(fila);
     });
@@ -138,6 +197,10 @@ function renderizarProductos(listaProductos) {
 
       controlesProducto.appendChild(cantidad);
       controlesProducto.appendChild(botonAgregar);
+      const editar = document.createElement('button');
+      editar.type = 'button'; editar.className = 'btn-editar'; editar.textContent = 'Editar';
+      editar.addEventListener('click', () => openProductModal(producto.id, productos, true));
+      controlesProducto.appendChild(editar);
 
       pieProducto.appendChild(controlesProducto);
       tarjeta.appendChild(pieProducto);
@@ -149,6 +212,7 @@ function renderizarProductos(listaProductos) {
 
 function agregarAFactura(productoId, cantidadIngresada) {
 
+  if (!catalogoCargado || productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
   let cantidad = Number(cantidadIngresada);
 
   if (cantidad < 1 || isNaN(cantidad)) {
@@ -214,7 +278,7 @@ function renderizarFactura() {
     nombre.textContent = item.nombre;
     detalles.appendChild(nombre);
 
-    const subtotalProducto = item.precio * item.cantidad;
+    const subtotalProducto = Math.round(item.precio * item.cantidad);
 
     const detallesPrecio = document.createElement("p");
     detallesPrecio.textContent = `$${item.precio.toLocaleString('es-CO')} x ${item.cantidad} = $${subtotalProducto.toLocaleString('es-CO')}`;
@@ -258,6 +322,7 @@ function renderizarFactura() {
 
 
 function cambiarCantidad(productoId, cambio) {
+    if (productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
     const producto = factura.find(item => item.id === productoId);
 
     if (!producto) return;
@@ -287,19 +352,21 @@ function cambiarCantidad(productoId, cambio) {
 
 
 function eliminarProducto(productoId) {
+  if (productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
   factura = factura.filter(item => item.id !== productoId);
   renderizarFactura();
 }
 
 
 function calcularTotales() {
-  const subtotal = factura.reduce((acumulador, item) => acumulador + (item.precio * item.cantidad), 0);
-  const iva = subtotal * 0.19;
+  const subtotal = Math.round(factura.reduce((acumulador, item) => acumulador + (item.precio * item.cantidad), 0));
+  const iva = Math.round(subtotal * 0.19);
   const total = subtotal + iva;
 
   subtotalValor.textContent = `$${subtotal.toLocaleString('es-CO')}`;
   ivaValor.textContent = `$${iva.toLocaleString('es-CO')}`;
   totalValor.textContent = `$${total.toLocaleString('es-CO')}`;
+  actualizarCalculoCambio();
 }
 
 
@@ -348,6 +415,7 @@ const botonVaciar = document.querySelector("#btn-vaciar");
 
 if (botonVaciar) {
   botonVaciar.addEventListener("click", () => {
+    if (productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
     factura = [];
     renderizarFactura();
   });
@@ -362,8 +430,8 @@ const cambioValor = document.querySelector('#cambio-valor');
 
 // Obtener el total numérico con la misma fórmula global
 function calcularTotalVenta() {
-  const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-  const iva = subtotal * 0.19;
+  const subtotal = Math.round(factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0));
+  const iva = Math.round(subtotal * 0.19);
   return subtotal + iva;
 }
 
@@ -372,7 +440,7 @@ function actualizarCalculoCambio() {
   if (!inputRecibido || !cambioValor) return;
 
   const total = calcularTotalVenta();
-  const recibido = Number(inputRecibido.value) || 0;
+  const recibido = Math.round(Number(inputRecibido.value) || 0);
   const cambio = recibido - total;
 
   // Si no se ha ingresado dinero o no alcanza, el cambio es 0
@@ -403,16 +471,28 @@ if (inputRecibido) {
 const botonFinalizar = document.querySelector('#btn-finalizar');
 
 if (botonFinalizar) {
-  botonFinalizar.addEventListener('click', () => {
+  botonFinalizar.addEventListener('click', async () => {
+    if (!catalogoCargado || productosGuardando || compraPendiente) return;
+    if (ventaAbiertaGuardadoPendiente) {
+      mostrarNotificacion('Primero reintenta guardar la venta abierta pendiente.', 'error');
+      return;
+    }
+    if (!ventaPendiente) {
     if (factura.length === 0) {
       mostrarNotificacion("La factura está vacía.","error");
       return;
     }
 
-    const subtotal = factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-    const iva = subtotal * 0.19;
+    if (factura.some(i => !Number.isInteger(i.precio) || !Number.isInteger(i.costo))) {
+      mostrarNotificacion('Los precios y costos deben ser pesos enteros. Corrige el producto antes de guardar.', 'error'); return;
+    }
+
+    const subtotal = Math.round(factura.reduce((sum, item) => sum + (item.precio * item.cantidad), 0));
+    const iva = Math.round(subtotal * 0.19);
     const total = subtotal + iva;
     const metodoPago = selectPago.value;
+    const clienteId = document.getElementById('select-cliente').value;
+    if (!validarClienteVenta(metodoPago, clienteId)) return;
 
     let recibido = 0;
     let cambio = 0;
@@ -420,10 +500,10 @@ if (botonFinalizar) {
 
     // Para pagos en efectivo:
     if (metodoPago === "Efectivo") {
-        recibido = Number(inputRecibido.value);
+        recibido = Math.round(Number(inputRecibido.value));
 
         // Si el usuario no escribió un número válido
-        if (isNaN(recibido)) {
+        if (!Number.isFinite(recibido)) {
             recibido = 0;
         }
 
@@ -436,7 +516,7 @@ if (botonFinalizar) {
             return;
         }
 
-        cambio = recibido - total;
+        cambio = Math.round(recibido - total);
     }
 
     // Para nequi
@@ -461,9 +541,12 @@ if (botonFinalizar) {
             producto => producto.id === itemVenta.id
         );
 
-        if (productoInventario) {
+        if (!productoInventario || !Number.isFinite(itemVenta.cantidad) || itemVenta.cantidad <= 0) {
+            stockValido = false;
+            mostrarNotificacion("Producto o cantidad no validos en la venta.", "error");
+        } else {
             if (productoInventario.trackStock) {
-                if (itemVenta.cantidad > productoInventario.stock) {
+                if (!Number.isFinite(productoInventario.stock) || itemVenta.cantidad > productoInventario.stock) {
                     stockValido = false;
 
                     mostrarNotificacion(
@@ -479,39 +562,93 @@ if (botonFinalizar) {
         return;
     }
 
+    const ahora = new Date().toISOString();
+
+    const itemsVenta = factura.map(item => ({
+      productoId: item.id,
+      nombre: item.nombre,
+      precio: item.precio,
+      costo: item.costo,
+      cantidad: item.cantidad
+    }));
+
     const nuevaVenta = {
-      id: `FAC-${Date.now()}`,
-      fecha: new Date().toLocaleString('es-CO'),
-      items: [...factura],
-      subtotal,
-      iva,
-      total,
+      id: ventaPendienteId || ventaAbiertaActualId || crypto.randomUUID(),
+      fecha: ventaAbiertaActualFecha || ahora,
+      estado: "cerrada",
+      clienteId,
       metodoPago,
-      recibido,
+      subtotal,
+      total,
+      valorRecibido: recibido,
       cambio,
-      saldoPendiente
+      itemsJson: itemsVenta,
+      actualizadoEn: ahora
     };
 
-    guardarVentaLocalStorage(nuevaVenta);
-
-    factura.forEach(itemVenta => {
-        const productoInventario = productos.find(
-            producto => producto.id === itemVenta.id
-        );
-
-        if (productoInventario && productoInventario.trackStock) {
-            productoInventario.stock -= itemVenta.cantidad;
-        }
+    const stocksObjetivo = factura.flatMap(item => {
+      const producto = productos.find(p => p.id === item.id);
+      return producto && producto.trackStock
+        ? [{ id: producto.id, stock: producto.stock - item.cantidad }]
+        : [];
     });
+    ventaPendienteId = nuevaVenta.id;
+    ventaPendiente = { venta: nuevaVenta, stocksObjetivo, confirmada: false, createIntentado: false, action: ventaAbiertaActualId ? 'update' : 'create' };
+    }
 
-    guardarProductosLocalStorage(productos);
+    const operacion = ventaPendiente;
+    const nuevaVenta = operacion.venta;
 
-    renderizarProductos(productos);
-    renderTablaCRUD(productos);
-    mostrarNotificacion("Venta registrada con exito", "exito")
-    imprimirFactura(nuevaVenta);
-    
+    productosGuardando = true;
+    botonFinalizar.disabled = true;
+    try {
 
+      if (!operacion.confirmada) {
+        // Tras una respuesta incierta, consultar antes de cualquier nuevo create.
+        if (operacion.createIntentado) {
+          const ventas = await apiGet("ventas");
+          operacion.confirmada = ventas.some(v => String(v.id) === nuevaVenta.id && v.estado === 'cerrada');
+        }
+        if (!operacion.confirmada) {
+          operacion.createIntentado = true;
+          try {
+            await apiPost("ventas", operacion.action, nuevaVenta);
+            operacion.confirmada = true;
+          } catch (error) {
+            const ventas = await apiGet("ventas");
+            operacion.confirmada = ventas.some(v => String(v.id) === nuevaVenta.id && v.estado === 'cerrada');
+            if (!operacion.confirmada) throw error;
+          }
+        }
+      }
+
+      // Siempre repetir valores absolutos capturados antes del primer envio.
+      for (const objetivo of operacion.stocksObjetivo) {
+        await apiPost("productos", "update", objetivo);
+      }
+      // No modificar el catalogo local hasta confirmar TODOS los updates.
+      for (const objetivo of operacion.stocksObjetivo) {
+        const producto = productos.find(p => p.id === objetivo.id);
+        if (producto) producto.stock = objetivo.stock;
+      }
+    } catch (error) {
+      renderizarProductos(obtenerProductosActuales());
+      renderTablaCRUD(productos);
+      mostrarNotificacion(`${operacion.confirmada ? "Venta registrada; falta confirmar el inventario" : "No se pudo confirmar la venta"}: ${error.message}. Pulsa Reintentar cierre; se conservaron el UUID y los stocks objetivo.`, "error");
+      return;
+    } finally {
+      productosGuardando = false;
+      botonFinalizar.disabled = false;
+      botonFinalizar.textContent = "Reintentar cierre";
+    }
+
+    ventaPendienteId = null;
+    ventaPendiente = null;
+    ventaAbiertaActualId = null;
+    ventaAbiertaActualFecha = null;
+    document.getElementById('select-cliente').value = '';
+    document.getElementById('venta-abierta-estado').textContent = '';
+    botonFinalizar.textContent = "Finalizar Venta";
     factura = [];
     inputRecibido.value = "";
     cambioValor.textContent = "$0";
@@ -519,8 +656,10 @@ if (botonFinalizar) {
     grupoEfectivo.classList.remove("hidden");
 
     renderizarFactura();
-
-    renderHistorial();
+    renderizarProductos(obtenerProductosActuales());
+    renderTablaCRUD(productos);
+    mostrarNotificacion("Venta registrada correctamente. Puedes imprimirla desde el historial.", "exito");
+    renderHistorial(true);
     
   });
 }

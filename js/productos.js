@@ -6,6 +6,7 @@ eliminar
 validaciones
 */
 let productoAEliminarId = null;
+let edicionProductoDesdePOS = false;
 
 // Renderiza la tabla CRUD
 function renderTablaCRUD(listaProductos) {
@@ -36,12 +37,12 @@ listaProductos.forEach(prod => {
 });
 
   // Asigna eventos a los botones recién creados
-document.querySelectorAll('.btn-editar').forEach(btn => {
-    btn.addEventListener('click', () => openProductModal(Number(btn.dataset.id), listaProductos));
+productsTableBody.querySelectorAll('.btn-editar').forEach(btn => {
+    btn.addEventListener('click', () => openProductModal(btn.dataset.id, listaProductos));
 });
 
-document.querySelectorAll('.btn-eliminar').forEach(btn => {
-    btn.addEventListener('click', () => confirmarEliminacion(Number(btn.dataset.id), listaProductos));
+productsTableBody.querySelectorAll('.btn-eliminar').forEach(btn => {
+    btn.addEventListener('click', () => confirmarEliminacion(btn.dataset.id, listaProductos));
 });
 }
 
@@ -70,12 +71,14 @@ if (trackCheckbox && stockInput) {
 }
 
 // Abre el modal (vacío para crear, o lleno para editar)
-function openProductModal(productId = null, listaProductos = []) {
+function openProductModal(productId = null, listaProductos = [], desdePOS = false) {
 const modal = document.getElementById('product-modal');
 const form = document.getElementById('product-form');
-if (!modal || !form) return;
+if (!modal || !form || !catalogoCargado || productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
 
 form.reset();
+edicionProductoDesdePOS = desdePOS;
+document.getElementById('track-inventory').disabled = desdePOS;
 
 if (productId) {
     // INICIA EL MODO DE EDITAR
@@ -85,7 +88,7 @@ if (productId) {
     document.getElementById('modal-title').textContent = "Editar Producto";
     document.getElementById('product-id').value = prod.id;
     document.getElementById('product-code').value = prod.codigo;
-    document.getElementById('product-category').value = prod.categoria;
+    document.getElementById('product-category').value = prod.categoriaId;
     document.getElementById('product-name').value = prod.nombre;
     document.getElementById('product-description').value = prod.descripcion || "";
     document.getElementById('product-price').value = prod.precio;
@@ -107,16 +110,18 @@ if (productId) {
     document.getElementById('product-stock').disabled = true;
 }
 
+if (desdePOS) document.getElementById('product-stock').disabled = true;
 modal.classList.remove('hidden');
 }
 
 // Procesa el envío del formulario (Crear o Modificar en el arreglo)
-function handleFormSubmit(event, listaProductos) {
+async function handleFormSubmit(event, listaProductos) {
     event.preventDefault();
+    if (!catalogoCargado || productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
 
     const id = document.getElementById('product-id').value;
     const codigo = document.getElementById('product-code').value;
-    const categoria = document.getElementById('product-category').value.trim();
+    const categoriaId = document.getElementById('product-category').value;
     const nombre = document.getElementById('product-name').value.trim();
     const descripcion = document.getElementById('product-description').value.trim();
     const precio = Number(document.getElementById('product-price').value);
@@ -128,15 +133,18 @@ function handleFormSubmit(event, listaProductos) {
         stock = Number(document.getElementById("product-stock").value);
     }
 
-    if (trackStock && isNaN(stock)) {
+    if (![stock, precio, costo].every(Number.isFinite)) {
         mostrarNotificacion("Debes ingresar una cantidad de stock.", "error");
         return;
     }
-    if (nombre === "" || categoria === "") {
+    if (nombre === "" || !categorias.some(c => c.id === categoriaId)) {
         mostrarNotificacion("Nombre y categoría son obligatorios.", "error");
         return;
     }
 
+    if (!Number.isInteger(precio) || !Number.isInteger(costo)) {
+        mostrarNotificacion('Precio y costo deben ser pesos enteros.', 'error'); return;
+    }
     if (precio < 0 || costo < 0) {
         mostrarNotificacion("El precio y el costo no pueden ser negativos.", "error");
         return;
@@ -147,45 +155,46 @@ function handleFormSubmit(event, listaProductos) {
         return;
     }
 
-    if (id) {
-        // Actualiza el producto existente
-        const index = listaProductos.findIndex(p => p.id === Number(id));
-        if (index !== -1) {
-            listaProductos[index] = { ...listaProductos[index], codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
-
-            const productoEnFactura = factura.find(item => item.id === Number(id));
-            if (productoEnFactura){
-                productoEnFactura.codigo = codigo;
-                productoEnFactura.nombre = nombre;
-                productoEnFactura.categoria = categoria;
-                productoEnFactura.descripcion = descripcion;
-                productoEnFactura.precio = precio;
-
-                renderizarFactura();
-
-            }
+    const anterior = listaProductos.find(p => p.id === id);
+    const botones = [...document.querySelectorAll('#product-form button'), document.getElementById('btn-close-product-modal')];
+    productosGuardando = true;
+    botones.forEach(b => b.disabled = true);
+    try {
+        if (id && !anterior) throw new Error("El producto ya no existe.");
+        const producto = {
+            id: id || crypto.randomUUID(), codigo, nombre, categoriaId, precio, costo,
+            seguimientoInventario: trackStock, stock, descripcion,
+            imagenes: anterior ? anterior.imagenes : ""
+        };
+        if (edicionProductoDesdePOS) {
+            // No enviar campos de inventario desde la edicion en el POS.
+            delete producto.stock;
+            delete producto.seguimientoInventario;
         }
-    } else {
-        // Crear un nuevo producto
-        const nuevoProducto = { id: Date.now(), codigo, categoria, nombre, descripcion, precio, costo, trackStock, stock };
-        listaProductos.push(nuevoProducto);
+        const respuesta = await apiPost("productos", id ? "update" : "create", producto);
+        const guardado = adaptarProducto({ ...anterior, ...producto, ...respuesta });
+        if (id) listaProductos[listaProductos.findIndex(p => p.id === id)] = guardado;
+        else listaProductos.push(guardado);
+        const item = factura.find(p => p.id === id);
+        if (item) {
+            Object.assign(item, guardado);
+            renderizarFactura();
+            actualizarCalculoCambio();
+        }
+        closeProductModal();
+        renderTablaCRUD(listaProductos);
+        renderizarProductos(obtenerProductosActuales());
+        mostrarNotificacion("Producto guardado", "exito");
+    } catch (error) {
+        mostrarNotificacion(error.message, "error");
+    } finally {
+        productosGuardando = false;
+        botones.forEach(b => b.disabled = false);
     }
-
-    // Guarda en localStorage si la función existe y refresca la interfaz
-
-    guardarProductosLocalStorage(listaProductos);
-
-    closeProductModal();
-    renderTablaCRUD(listaProductos);
-
-    // Si existe la función de re-renderizar la catálogo POS, la ejecuta
-
-    renderizarProductos(listaProductos);
-    mostrarNotificacion("Producto guardado con exito", "exito")
-
-    }
+}
 
 function confirmarEliminacion(id, listaProductos) {
+    if (!catalogoCargado || productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
     const prod = listaProductos.find(p => p.id === id);
     if (!prod) return;
 
