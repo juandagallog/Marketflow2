@@ -7,6 +7,7 @@ validaciones
 */
 let productoAEliminarId = null;
 let edicionProductoDesdePOS = false;
+let creacionProductoDesdeCompra = false;
 
 // Renderiza la tabla CRUD
 function renderTablaCRUD(listaProductos) {
@@ -50,6 +51,8 @@ productsTableBody.querySelectorAll('.btn-eliminar').forEach(btn => {
 function closeProductModal() {
 const modal = document.getElementById('product-modal');
 if (modal) modal.classList.add('hidden');
+if (creacionProductoDesdeCompra) document.getElementById('btn-nuevo-producto-compra').focus();
+creacionProductoDesdeCompra = false;
 }
 
 // Cierra el modal de confirmación de eliminación
@@ -71,13 +74,14 @@ if (trackCheckbox && stockInput) {
 }
 
 // Abre el modal (vacío para crear, o lleno para editar)
-function openProductModal(productId = null, listaProductos = [], desdePOS = false) {
+function openProductModal(productId = null, listaProductos = [], desdePOS = false, desdeCompra = false) {
 const modal = document.getElementById('product-modal');
 const form = document.getElementById('product-form');
 if (!modal || !form || !catalogoCargado || productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
 
 form.reset();
 edicionProductoDesdePOS = desdePOS;
+creacionProductoDesdeCompra = desdeCompra;
 document.getElementById('track-inventory').disabled = desdePOS;
 
 if (productId) {
@@ -112,6 +116,7 @@ if (productId) {
 
 if (desdePOS) document.getElementById('product-stock').disabled = true;
 modal.classList.remove('hidden');
+document.getElementById('product-name').focus();
 }
 
 // Procesa el envío del formulario (Crear o Modificar en el arreglo)
@@ -180,6 +185,11 @@ async function handleFormSubmit(event, listaProductos) {
             Object.assign(item, guardado);
             renderizarFactura();
             actualizarCalculoCambio();
+        }
+        actualizarProductosCompra();
+        if (creacionProductoDesdeCompra) {
+            document.getElementById('compra-producto').value = guardado.id;
+            document.getElementById('compra-costo').value = guardado.costo;
         }
         closeProductModal();
         renderTablaCRUD(listaProductos);

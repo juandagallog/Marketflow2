@@ -58,7 +58,7 @@ async function cargarClientes() {
   const estado = document.getElementById('clientes-estado');
   const estadoPos = document.getElementById('clientes-pos-estado');
   estado.textContent = estadoPos.textContent = '';
-  const quitarSkeleton = mostrarSkeleton(estado);
+  const quitarSkeleton = mostrarSkeleton(document.getElementById('clientes-table-body'), 'tabla', 4);
   const quitarSkeletonPos = mostrarSkeleton(estadoPos);
   document.getElementById('btn-recargar-clientes').disabled = true;
   clientesEnCarga = (async () => {
@@ -75,6 +75,7 @@ async function cargarClientes() {
     } finally {
       quitarSkeleton(); quitarSkeletonPos();
       document.getElementById('btn-recargar-clientes').disabled = false;
+      iniciarBorradorVenta();
     }
   })();
   try { await clientesEnCarga; } finally { clientesEnCarga = null; }

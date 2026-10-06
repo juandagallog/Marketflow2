@@ -101,7 +101,7 @@ async function cargarYRenderizarHistorial() {
 
     const infoHeader = document.createElement('div');
     const idText = document.createElement('strong');
-    idText.textContent = `N° ${venta.id}`;
+    idText.textContent = referenciaVisible(venta.id, 'VTA');
     
     const fechaText = document.createElement('p');
     fechaText.classList.add('historial-card-fecha');
@@ -240,13 +240,13 @@ function imprimirFactura(venta) {
     <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>Factura - ${venta.id}</title>
+        <title>Factura - ${referenciaVisible(venta.id, 'VTA')}</title>
         <link rel="stylesheet" href="css/Style.css">
       </head>
       <body class="ticket-body">
         <div class="ticket-wrapper">
           <h2 class="ticket-title">Papel y Luna</h2>
-          <p class="ticket-meta">Factura N°: ${venta.id}</p>
+          <p class="ticket-meta">Referencia: ${referenciaVisible(venta.id, 'VTA')}</p>
           <p class="ticket-meta">Fecha: ${venta.fecha}</p>
           <div class="ticket-divider"></div>
           ${filasItems}

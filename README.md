@@ -29,7 +29,14 @@ El frontend llama a `GET ?resource=...` para consultar y a `POST ?resource=...` 
 - Protección de eliminación para entidades con registros asociados.
 - Compras con proveedor, cantidades, costos, total, listado y detalle.
 - Descuento de stock al cerrar ventas; incremento de stock y actualización de costo con compras. Los productos sin seguimiento no cambian su stock.
-- Indicador global de carga, botones de guardado deshabilitados y mensajes de error.
+- Skeletons durante las consultas e indicador global con spinner durante las escrituras; botones de guardado deshabilitados y mensajes de error.
+- Montos derivados en pesos enteros y actualización inmediata del cambio al modificar el carrito.
+
+### Política monetaria
+
+El subtotal se redondea a pesos enteros, el IVA se calcula como `Math.round(subtotal * 0.19)` y el total es `subtotal + iva`. Recibido, cambio, saldos y totales de compras también se normalizan a enteros antes de guardar. Los formularios rechazan precios y costos fraccionarios sin modificar los valores originales automáticamente.
+
+El historial normaliza los montos al leerlos para mostrar e imprimir; esto no reescribe las filas antiguas de Sheets.
 
 ## Ejecución local
 
@@ -48,7 +55,9 @@ No hay dependencias del frontend que instalar ni proceso de compilación. Para g
 
 ## Configuración del servicio
 
-El código Apps Script se administra en el editor de Google; no está incluido actualmente en este repositorio. Debe implementar `create`, `update` y `delete`, incluyendo rechazo de IDs duplicados. Después de cambiarlo se debe publicar una nueva versión de la implementación, ejecutada como propietario y accesible para cualquier persona, según la guía del curso.
+El código del servicio está incluido en `AppsScript.gs`. Implementa consultas y acciones `create`, `update` y `delete`, rechazo de IDs duplicados y bloqueo de escrituras concurrentes. Se ejecuta en Google Apps Script, no en el navegador ni en GitHub Pages.
+
+Para configurar el servicio, crear las pestañas y encabezados de la tabla siguiente en Google Sheets, abrir su editor de Apps Script y copiar el contenido de `AppsScript.gs`. Publicar como aplicación web, ejecutada como propietario y accesible para cualquier persona, según la guía del curso. Copiar la URL terminada en `/exec` a `API_URL` en `js/api.js`. Después de cambiar el servicio, publicar una nueva versión de la implementación.
 
 | Recurso | Encabezados |
 |---|---|
@@ -67,7 +76,7 @@ La aplicación también usa `descripcion` e `imagenes` en productos: agregar amb
 |---|---|
 | index.html / css/Style.css | Vistas, formularios y estilos |
 | js/api.js | URL, peticiones, timeout y reintentos limitados |
-| js/loading.js | Indicador de operaciones remotas concurrentes; envuelve las funciones de API |
+| js/loading.js | Contador de operaciones remotas, overlay para escrituras y skeletons para consultas |
 | js/app.js | Inicialización, navegación y conexión de eventos |
 | js/pos.js | Catálogo, carrito, pagos y cierre de ventas con stocks objetivo |
 | js/ventas-abiertas.js | Guardado y recuperación de ventas abiertas |
@@ -76,6 +85,7 @@ La aplicación también usa `descripcion` e `imagenes` en productos: agregar amb
 | js/clientes.js | CRUD de clientes y selector del POS |
 | js/gestion.js | CRUD compartido de proveedores y categorías, y comprobación de relaciones |
 | js/compras.js | Registro de compras, objetivos de inventario/costo, listado y detalle |
+| AppsScript.gs | Servicio de Google Sheets: lectura, creación, actualización, eliminación y control de IDs |
 | imagenes/ | Recursos visuales; las rutas se obtienen de los productos del servicio |
 
 ## Reintentos y limitaciones
@@ -88,11 +98,12 @@ La aplicación también usa `descripcion` e `imagenes` en productos: agregar amb
 - El inventario parte de la copia cargada en el navegador; escrituras simultáneas desde varios equipos pueden entrar en conflicto. La demostración debe hacerse con un solo operador.
 - La API es pública y no implementa autenticación ni roles. Usar datos de demostración; autenticación corresponde al MVP 3.
 
-## Verificación pendiente antes de entregar
+## Validación de entrega
 
-- Corregir el cambio mostrado si se modifica el carrito después de ingresar el efectivo: el total se recalcula, pero el cambio visible puede conservar el valor anterior.
-- Unificar el manejo de dinero en pesos enteros según la guía: el cálculo de IVA actual puede producir decimales (por ejemplo, precio 50 genera total 59,5).
-- Verificar todos los flujos en el servicio y frontend desplegados, incluida la impresión y la navegación móvil. La revisión de sintaxis no sustituye esas pruebas.
+- La revisión local de sintaxis de los diez archivos JavaScript y de `AppsScript.gs` pasó; las referencias de scripts y CSS del HTML existen.
+- Se comprobaron con API simulada los montos derivados, el contador de carga y la retirada de skeletons. Estas comprobaciones no sustituyen las pruebas del servicio publicado.
+- Antes de entregar, probar en la URL pública: venta cerrada e impresión, venta abierta y cierre con el mismo ID, cliente obligatorio para Debe, compra e inventario, edición de categorías y protección de relaciones.
+- Comprobar navegación móvil, retirada de skeletons al terminar o fallar una consulta y correspondencia de los registros con Sheets.
 
 ## Integrantes
 
@@ -111,6 +122,7 @@ La URL del frontend abre la aplicación; es distinta de `API_URL`, que recibe la
 - Mantener el mismo repositorio del MVP 1, con commits visibles de todos los integrantes.
 - Publicar el frontend en GitHub Pages u otra plataforma gratuita y comprobar los flujos en la URL pública, también en móvil.
 - Completar la URL anterior y preparar `desarrollo-web-2026-2-parcial2-apellidoA-apellidoB-apellidoC.zip` con código fuente, README y recursos, sin dependencias instaladas ni carpetas de compilación.
-- Conservar una copia del código Apps Script utilizado para reproducir el servicio y explicarlo en la sustentación.
+- Incluir `index.html`, `README.md`, `AppsScript.gs`, `js/`, `css/` e `imagenes/` en el ZIP; excluir `.git/`.
+- Verificar que `AppsScript.gs` corresponda a la versión publicada del servicio y completar los nombres de los integrantes antes de entregar.
 
 El alcance de esta entrega se toma del documento MVP 2. Descuentos, reembolsos, correcciones de ventas cerradas, reportes, autenticación, roles y backend propio quedan para MVP 3.

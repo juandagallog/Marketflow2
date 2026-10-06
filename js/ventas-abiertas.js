@@ -37,6 +37,7 @@ async function guardarVentaAbierta() {
     ventaAbiertaGuardadoPendiente = { venta, action: ventaAbiertaActualId ? 'update' : 'create', intentado: false };
   }
   const operacion = ventaAbiertaGuardadoPendiente;
+  marcarEscrituraBorrador(operacion.venta.id);
   const boton = document.getElementById('btn-guardar-abierta');
   productosGuardando = true;
   boton.disabled = true; botonFinalizar.disabled = true;
@@ -52,6 +53,7 @@ async function guardarVentaAbierta() {
       }
     }
     // Guardar abierta nunca escribe inventario.
+    eliminarBorradorVenta();
     ventaAbiertaGuardadoPendiente = null;
     ventaAbiertaActualId = null; ventaAbiertaActualFecha = null;
     ventaPendienteId = null;
@@ -88,6 +90,7 @@ async function retomarVentaAbierta(id) {
     });
     if (items.some(i => !Number.isFinite(i.precio) || !Number.isFinite(i.cantidad) || i.cantidad <= 0)) throw new Error('Las líneas de la venta no son válidas.');
     factura = items;
+    eliminarBorradorVenta();
     ventaAbiertaActualId = String(venta.id); ventaAbiertaActualFecha = venta.fecha;
     const select = document.getElementById('select-cliente');
     const clienteId = String(venta.clienteId || '');
@@ -96,7 +99,7 @@ async function retomarVentaAbierta(id) {
     selectPago.value = venta.metodoPago;
     selectPago.dispatchEvent(new Event('change'));
     inputRecibido.value = adaptada.recibido;
-    document.getElementById('venta-abierta-estado').textContent = `Editando venta abierta ${ventaAbiertaActualId}`;
+    document.getElementById('venta-abierta-estado').textContent = `Editando venta abierta ${referenciaVisible(ventaAbiertaActualId, 'VTA')}`;
     renderizarFactura(); actualizarCalculoCambio();
     document.getElementById('btn-nav-pos').click();
   } catch (error) { mostrarNotificacion(error.message, 'error'); }

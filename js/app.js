@@ -17,6 +17,11 @@ for (const resource of ['proveedores', 'categorias']) {
 }
 document.getElementById('compra-form').addEventListener('submit', registrarCompra);
 document.getElementById('btn-agregar-compra').addEventListener('click', agregarLineaCompra);
+document.getElementById('btn-nuevo-proveedor-compra').addEventListener('click', abrirProveedorDesdeCompra);
+document.getElementById('nuevo-proveedor-form').addEventListener('submit', e => guardarGestion('proveedores', e, true));
+document.getElementById('btn-cerrar-nuevo-proveedor').addEventListener('click', cerrarProveedorDesdeCompra);
+document.getElementById('btn-cancelar-nuevo-proveedor').addEventListener('click', cerrarProveedorDesdeCompra);
+document.getElementById('btn-nuevo-producto-compra').addEventListener('click', () => openProductModal(null, productos, false, true));
 document.getElementById('btn-recargar-compras').addEventListener('click', cargarCompras);
 document.getElementById('compra-producto').addEventListener('change', () => {
   const producto = productos.find(p => p.id === document.getElementById('compra-producto').value);
@@ -82,7 +87,7 @@ btnClientes.addEventListener('click', () => {
 });
 btnProductos.addEventListener("click", () => {
     mostrarVista(vistaProductos, btnProductos);
-    renderTablaCRUD(productos);
+    if (catalogoCargado) renderTablaCRUD(productos);
 });
 btnHistorial.addEventListener("click", () => {
     mostrarVista(vistaHistorial, btnHistorial);
@@ -135,6 +140,7 @@ document.getElementById('track-inventory').addEventListener('change', toggleStoc
 });
 
 
+let temporizadorNotificacion;
 function mostrarNotificacion(mensaje, tipo) {
     const notificacion = document.querySelector("#notificacion");
 
@@ -146,7 +152,8 @@ function mostrarNotificacion(mensaje, tipo) {
 
     notificacion.classList.add(tipo);
 
-    setTimeout(() => {
+    clearTimeout(temporizadorNotificacion);
+    temporizadorNotificacion = setTimeout(() => {
         notificacion.classList.add("hidden");
-    }, 3000);
+    }, tipo === 'error' ? 9000 : 5000);
 }

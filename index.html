@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/Style.css">
   <script src="js/api.js" defer></script>
   <script src="js/loading.js" defer></script>
+  <script src="js/borrador-venta.js" defer></script>
   <script src="js/productos.js" defer></script>
   <script src="js/clientes.js" defer></script>
   <script src="js/historial.js" defer></script>
@@ -19,7 +20,7 @@
 </head>
 
 <body>
-  <div id="loading-global" class="loading-global hidden" role="status" aria-live="polite" aria-busy="false"><span class="loading-spinner" aria-hidden="true"></span><span id="loading-texto">Guardando...</span></div>
+  <div id="loading-global" class="loading-global hidden" role="status" aria-live="polite" aria-busy="false"><div class="loading-panel"><span class="loading-spinner" aria-hidden="true"></span><span id="loading-texto">Guardando...</span></div></div>
 
   <header class="main-header">
     <div class="header-brand">
@@ -196,7 +197,7 @@
  <form id="proveedores-form" class="modal-form"><input type="hidden" id="proveedores-id"><div class="form-group"><label for="proveedores-nombre">Nombre:</label><input id="proveedores-nombre" type="text" required></div><div class="form-group"><label for="proveedores-telefono">Teléfono:</label><input id="proveedores-telefono" type="tel" ></div><div class="form-group"><label for="proveedores-correo">Correo:</label><input id="proveedores-correo" type="email" ></div>
  <div><button type="submit" class="btn-primary">Guardar</button> <button type="button" id="proveedores-cancelar" class="btn-primary">Nuevo / Cancelar edición</button></div></form>
  <div class="form-group"><label for="proveedores-buscar">Buscar:</label><input id="proveedores-buscar" type="search"></div>
- <div class="table-responsive"><table class="crud-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Correo</th><th>Acciones</th></tr></thead><tbody id="proveedores-body"></tbody></table></div>
+ <div class="table-responsive"><table class="crud-table"><thead><tr><th>Referencia</th><th>Nombre</th><th>Teléfono</th><th>Correo</th><th>Acciones</th></tr></thead><tbody id="proveedores-body"></tbody></table></div>
  </section>
 <section id="vista-categorias" class="vista-oculta admin-container">
  <div class="crud-header"><h2>Categorías</h2><button type="button" id="categorias-recargar" class="btn-primary">Recargar</button></div>
@@ -204,26 +205,46 @@
  <form id="categorias-form" class="modal-form"><input type="hidden" id="categorias-id"><div class="form-group"><label for="categorias-nombre">Nombre:</label><input id="categorias-nombre" type="text" required></div>
  <div><button type="submit" class="btn-primary">Guardar</button> <button type="button" id="categorias-cancelar" class="btn-primary">Nuevo / Cancelar edición</button></div></form>
  <div class="form-group"><label for="categorias-buscar">Buscar:</label><input id="categorias-buscar" type="search"></div>
- <div class="table-responsive"><table class="crud-table"><thead><tr><th>Nombre</th><th>Acciones</th></tr></thead><tbody id="categorias-body"></tbody></table></div>
+ <div class="table-responsive"><table class="crud-table"><thead><tr><th>Referencia</th><th>Nombre</th><th>Acciones</th></tr></thead><tbody id="categorias-body"></tbody></table></div>
  </section>
 <section id="vista-compras" class="vista-oculta admin-container">
- <div class="crud-header"><h2>Compras</h2><button type="button" id="btn-recargar-compras" class="btn-primary">Recargar compras</button></div>
+ <div class="crud-header"><div><h2>Compras</h2><p class="section-help">Registra una compra con todos sus productos y costos.</p></div><button type="button" id="btn-recargar-compras" class="btn-discreto">↻ Recargar</button></div>
  <form id="compra-form" class="modal-form">
- <div class="form-group"><label for="compra-proveedor">Proveedor:</label><select id="compra-proveedor" required><option value="">Selecciona un proveedor</option></select></div>
- <div class="form-group"><label for="compra-producto">Producto:</label><select id="compra-producto"><option value="">Selecciona un producto</option></select></div>
+ <fieldset class="compra-paso"><legend><span class="paso-numero">1</span> Proveedor</legend>
+ <div class="context-field"><div class="form-group"><label for="compra-proveedor">Selecciona el proveedor</label><select id="compra-proveedor" required><option value="">Selecciona un proveedor</option></select></div><button type="button" id="btn-nuevo-proveedor-compra" class="btn-contextual">+ Nuevo proveedor</button></div>
+ </fieldset>
+ <fieldset class="compra-paso"><legend><span class="paso-numero">2</span> Productos</legend>
+ <p class="section-help">Agrega cada producto a la lista. Puedes registrar varios en una sola compra.</p>
+ <div class="context-field"><div class="form-group"><label for="compra-producto">Selecciona un producto</label><select id="compra-producto"><option value="">Selecciona un producto</option></select></div><button type="button" id="btn-nuevo-producto-compra" class="btn-contextual">+ Nuevo producto</button></div>
  <div class="form-row"><div class="form-group"><label for="compra-cantidad">Cantidad:</label><input type="number" id="compra-cantidad" min="1" step="1" value="1"></div>
  <div class="form-group"><label for="compra-costo">Costo por unidad:</label><input type="number" id="compra-costo" min="0" step="1"></div></div>
- <button type="button" id="btn-agregar-compra" class="btn-primary">Agregar producto</button>
+ <button type="button" id="btn-agregar-compra" class="btn-secondary">+ Agregar a la compra</button>
+ </fieldset>
+ <fieldset class="compra-paso"><legend><span class="paso-numero">3</span> Resumen</legend>
  <div class="table-responsive"><table class="crud-table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Costo</th><th>Subtotal</th><th>Acciones</th></tr></thead><tbody id="compra-items"></tbody></table></div>
- <p>Total: <strong id="compra-total">$0</strong></p>
- <button type="submit" id="btn-registrar-compra" class="btn-primary">Registrar compra</button>
+ <div class="compra-resumen"><p>Total de la compra</p><strong id="compra-total">$0</strong></div>
+ </fieldset>
+ <div class="compra-confirmar"><p class="section-help">Revisa los productos, cantidades y costos antes de registrar.</p><button type="submit" id="btn-registrar-compra" class="btn-primary">Registrar compra</button></div>
  </form><p id="compra-estado" role="status"></p>
  <h3>Compras registradas</h3><p id="compras-lista-estado" role="status"></p><div id="compras-lista" class="historial-list"></div>
  </section>
   </main>
 
+  <div id="nuevo-proveedor-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="nuevo-proveedor-titulo">
+    <div class="modal-card modal-compacta">
+      <div class="modal-header"><h3 id="nuevo-proveedor-titulo">Nuevo proveedor</h3><button type="button" id="btn-cerrar-nuevo-proveedor" class="close-modal-btn" aria-label="Cerrar">✕</button></div>
+      <form id="nuevo-proveedor-form" class="modal-form">
+        <input type="hidden" id="nuevo-proveedor-id">
+        <div class="form-group"><label for="nuevo-proveedor-nombre">Nombre</label><input id="nuevo-proveedor-nombre" required></div>
+        <div class="form-group"><label for="nuevo-proveedor-telefono">Teléfono</label><input type="tel" id="nuevo-proveedor-telefono"></div>
+        <div class="form-group"><label for="nuevo-proveedor-correo">Correo</label><input type="email" id="nuevo-proveedor-correo"></div>
+        <div class="modal-actions"><button type="button" id="btn-cancelar-nuevo-proveedor" class="btn-cancel">Cancelar</button><button type="submit" class="btn-primary">Crear proveedor</button></div>
+      </form>
+    </div>
+  </div>
+
   <!-- CREAR / EDITAR PRODUCTO -->
-  <div id="product-modal" class="modal-overlay hidden">
+  <div id="product-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="modal-title">Nuevo Producto</h3>
@@ -304,7 +325,7 @@
   </div>
   
   <!-- NOTIFICACIONES -->
-  <div id="notificacion" class="notificacion hidden"></div>
+  <div id="notificacion" class="notificacion hidden" role="status" aria-live="polite"></div>
 
 </body>
 </html>

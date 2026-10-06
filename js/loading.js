@@ -33,7 +33,16 @@ apiPost = async function(resource, action, data) {
   finally { finalizarCarga(token); }
 };
 
-// La presentaci?n de lectura no modifica ni repite peticiones.
+// Referencia visual estable; nunca se usa para relaciones ni peticiones.
+function referenciaVisible(id, prefijo) {
+  const texto = String(id);
+  if (/^[a-z]+-\d+$/i.test(texto)) return texto.toUpperCase();
+  let hash = 2166136261;
+  for (const caracter of texto) hash = Math.imul(hash ^ caracter.charCodeAt(0), 16777619);
+  return `${prefijo}-${(hash >>> 0).toString(36).toUpperCase().padStart(7, '0')}`;
+}
+
+// La presentación de lectura no modifica ni repite peticiones.
 function mostrarSkeleton(contenedor, tipo = 'filas', columnas = 1) {
   const anteriores = [...contenedor.children];
   const visibilidad = anteriores.map(nodo => nodo.hidden);
@@ -41,6 +50,7 @@ function mostrarSkeleton(contenedor, tipo = 'filas', columnas = 1) {
   const skeleton = document.createElement(tipo === 'tabla' ? 'tr' : 'span');
   skeleton.className = 'skeleton-group';
   if (tipo === 'tabla') skeleton.className = 'skeleton-table';
+  if (tipo === 'catalogo') skeleton.classList.add('skeleton-catalogo');
   skeleton.setAttribute('role', 'status');
   skeleton.setAttribute('aria-label', 'Cargando contenido');
   let contenido = skeleton;
@@ -51,8 +61,9 @@ function mostrarSkeleton(contenedor, tipo = 'filas', columnas = 1) {
   }
   for (let i = 0; i < 3; i++) {
     const fila = document.createElement('span');
-    fila.className = tipo === 'tarjetas' ? 'historial-card skeleton-card' : 'skeleton-table-row';
-    for (let j = 0; j < (tipo === 'tabla' ? columnas : tipo === 'tarjetas' ? 3 : 1); j++) {
+    const tarjeta = tipo === 'tarjetas' || tipo === 'catalogo';
+    fila.className = tarjeta ? 'historial-card skeleton-card' : tipo === 'catalogo-lista' ? 'skeleton-producto-lista' : 'skeleton-table-row';
+    for (let j = 0; j < (tipo === 'tabla' ? columnas : tarjeta || tipo === 'catalogo-lista' ? 3 : 1); j++) {
       const linea = document.createElement('span');
       linea.className = 'skeleton-row';
       fila.appendChild(linea);

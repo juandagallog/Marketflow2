@@ -12,6 +12,11 @@ function actualizarProductosCompra() {
 
 function renderLineasCompra() {
   const body = document.getElementById('compra-items'); body.replaceChildren();
+  if (!lineasCompra.length) {
+    const fila = document.createElement('tr'); const celda = document.createElement('td');
+    celda.colSpan = 5; celda.className = 'tabla-vacia'; celda.textContent = 'Agrega productos para preparar esta compra.';
+    fila.appendChild(celda); body.appendChild(fila);
+  }
   lineasCompra.forEach((item, index) => {
     const tr = document.createElement('tr');
     [item.nombre, item.cantidad, `$${item.costo.toLocaleString('es-CO')}`, `$${Math.round(item.costo * item.cantidad).toLocaleString('es-CO')}`].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
@@ -108,7 +113,7 @@ async function cargarCompras(refrescarTrasCarga = false) {
   }
   const estado = document.getElementById('compras-lista-estado');
   estado.textContent = '';
-  const quitarSkeleton = mostrarSkeleton(estado);
+  const quitarSkeleton = mostrarSkeleton(document.getElementById('compras-lista'), 'tarjetas');
   comprasEnCarga = (async () => {
     try {
       const compras = (await apiGet('compras')).map(c => ({ ...c, total: Math.round(Number(c.total) || 0) }));
@@ -117,13 +122,41 @@ async function cargarCompras(refrescarTrasCarga = false) {
       compras.slice().reverse().forEach(compra => {
         const items = typeof compra.itemsJson === 'string' ? JSON.parse(compra.itemsJson) : compra.itemsJson;
         if (!Array.isArray(items)) throw new Error('La compra contiene líneas inválidas.');
-        const card = document.createElement('details'); card.className = 'historial-card';
+        const card = document.createElement('details'); card.className = 'historial-card compra-detalle';
         const summary = document.createElement('summary');
         const proveedor = gestiones.proveedores.registros.find(p => p.id === String(compra.proveedorId));
-        summary.textContent = `${compra.fecha} | ${proveedor?.nombre || compra.proveedorId} | $${Math.round(Number(compra.total)).toLocaleString('es-CO')} — Ver detalle`;
+        const titulo = document.createElement('strong'); titulo.textContent = referenciaVisible(compra.id, 'CMP');
+        const importe = document.createElement('strong'); importe.textContent = `$${Math.round(Number(compra.total)).toLocaleString('es-CO')}`;
+        const accion = document.createElement('span'); accion.className = 'detalle-indicacion'; accion.textContent = 'Ver detalle';
+        summary.append(titulo, importe, accion);
         card.appendChild(summary);
-        const id = document.createElement('p'); id.textContent = `Compra ${compra.id}`; card.appendChild(id);
-        items.forEach(i => { const p = document.createElement('p'); p.textContent = `${i.nombre}: ${i.cantidad} × $${Math.round(Number(i.costo)).toLocaleString('es-CO')}`; card.appendChild(p); });
+        const informacion = document.createElement('dl'); informacion.className = 'compra-datos';
+        const fecha = new Date(compra.fecha);
+        const datos = [['Proveedor', proveedor?.nombre || 'Proveedor no disponible'],
+          ['Fecha', Number.isNaN(fecha.getTime()) ? compra.fecha : fecha.toLocaleString('es-CO')],
+          ['Ítems comprados', items.map(i => `${i.nombre} (×${i.cantidad})`).join(', ')]];
+        datos.forEach(([etiqueta, valor]) => {
+          const grupo = document.createElement('div'); const dt = document.createElement('dt'); const dd = document.createElement('dd');
+          dt.textContent = etiqueta; dd.textContent = valor; grupo.append(dt, dd); informacion.appendChild(grupo);
+        });
+        // Resumen visible aun cuando el detalle está cerrado.
+        summary.appendChild(informacion);
+        const tabla = document.createElement('table'); tabla.className = 'crud-table';
+        const thead = document.createElement('thead'); const encabezado = document.createElement('tr');
+        ['Producto', 'Cantidad', 'Costo unitario', 'Subtotal'].forEach(texto => {
+          const th = document.createElement('th'); th.textContent = texto; th.scope = 'col'; encabezado.appendChild(th);
+        });
+        thead.appendChild(encabezado); tabla.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        items.forEach(i => {
+          const tr = document.createElement('tr');
+          [i.nombre, i.cantidad, `$${Math.round(Number(i.costo)).toLocaleString('es-CO')}`, `$${Math.round(Number(i.costo) * Number(i.cantidad)).toLocaleString('es-CO')}`].forEach(valor => {
+            const td = document.createElement('td'); td.textContent = valor; tr.appendChild(td);
+          }); tbody.appendChild(tr);
+        });
+        tabla.appendChild(tbody);
+        const responsive = document.createElement('div'); responsive.className = 'table-responsive'; responsive.appendChild(tabla);
+        card.appendChild(responsive);
         fragment.appendChild(card);
       });
       document.getElementById('compras-lista').replaceChildren(fragment);

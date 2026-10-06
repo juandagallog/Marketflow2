@@ -32,6 +32,10 @@ function renderGestion(resource) {
   body.replaceChildren();
   gestion.registros.filter(r => gestion.campos.some(c => r[c].toLowerCase().includes(texto))).forEach(r => {
     const tr = document.createElement('tr');
+    const referencia = document.createElement('td');
+    referencia.className = 'referencia-registro';
+    referencia.textContent = referenciaVisible(r.id, resource === 'categorias' ? 'CAT' : 'PRV');
+    tr.appendChild(referencia);
     gestion.campos.forEach(c => { const td = document.createElement('td'); td.textContent = r[c]; tr.appendChild(td); });
     const td = document.createElement('td');
     const editar = document.createElement('button'); editar.type = 'button'; editar.className = 'btn-editar'; editar.textContent = 'Editar'; editar.disabled = gestion.guardando;
@@ -65,7 +69,7 @@ async function cargarGestion(resource) {
   if (gestion.guardando) return;
   const estado = document.getElementById(`${resource}-estado`);
   estado.textContent = '';
-  const quitarSkeleton = mostrarSkeleton(document.getElementById(`${resource}-body`), 'tabla', gestion.campos.length + 1);
+  const quitarSkeleton = mostrarSkeleton(document.getElementById(`${resource}-body`), 'tabla', gestion.campos.length + 2);
   gestion.cargando = (async () => {
     try {
       const datos = await apiGet(resource);
@@ -81,17 +85,19 @@ async function cargarGestion(resource) {
   try { await gestion.cargando; } finally { quitarSkeleton(); gestion.cargando = null; }
 }
 
-async function guardarGestion(resource, event) {
+async function guardarGestion(resource, event, desdeCompra = false) {
   event.preventDefault();
   const gestion = gestiones[resource];
   if (gestion.guardando || gestion.cargando || productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
-  const idInput = document.getElementById(`${resource}-id`);
-  const datos = Object.fromEntries(gestion.campos.map(c => [c, document.getElementById(`${resource}-${c}`).value.trim()]));
+  const prefijo = desdeCompra ? 'nuevo-proveedor' : resource;
+  const idInput = document.getElementById(`${prefijo}-id`);
+  const datos = Object.fromEntries(gestion.campos.map(c => [c, document.getElementById(`${prefijo}-${c}`).value.trim()]));
   if (!datos.nombre) { mostrarNotificacion('El nombre es obligatorio.', 'error'); return; }
   const existente = gestion.registros.some(r => r.id === idInput.value);
   idInput.value = idInput.value || crypto.randomUUID();
   datos.id = idInput.value;
   bloquearGestion(resource, true);
+  if (desdeCompra) document.querySelectorAll('#nuevo-proveedor-modal button, #nuevo-proveedor-form input').forEach(e => e.disabled = true);
   try {
     let respuesta;
     try { respuesta = await apiPost(resource, existente ? 'update' : 'create', datos); }
@@ -103,11 +109,33 @@ async function guardarGestion(resource, event) {
     const guardado = Object.fromEntries(['id', ...gestion.campos].map(c => [c, String(respuesta?.[c] ?? datos[c])]));
     const index = gestion.registros.findIndex(r => r.id === datos.id);
     if (index < 0) gestion.registros.push(guardado); else gestion.registros[index] = guardado;
-    document.getElementById(`${resource}-form`).reset(); idInput.value = '';
+    document.getElementById(desdeCompra ? 'nuevo-proveedor-form' : `${resource}-form`).reset(); idInput.value = '';
     sincronizarGestion(resource);
+    if (desdeCompra) {
+      document.getElementById('compra-proveedor').value = guardado.id;
+      document.getElementById('nuevo-proveedor-modal').classList.add('hidden');
+      document.getElementById('btn-nuevo-proveedor-compra').focus();
+    }
     mostrarNotificacion('Registro guardado correctamente.', 'exito');
   } catch (error) { mostrarNotificacion(error.message, 'error'); }
-  finally { bloquearGestion(resource, false); }
+  finally {
+    bloquearGestion(resource, false);
+    if (desdeCompra) document.querySelectorAll('#nuevo-proveedor-modal button, #nuevo-proveedor-form input').forEach(e => e.disabled = false);
+  }
+}
+
+function abrirProveedorDesdeCompra() {
+  if (gestiones.proveedores.guardando || gestiones.proveedores.cargando || productosGuardando || compraPendiente || ventaPendiente || ventaAbiertaGuardadoPendiente) return;
+  document.getElementById('nuevo-proveedor-form').reset();
+  document.getElementById('nuevo-proveedor-id').value = '';
+  document.getElementById('nuevo-proveedor-modal').classList.remove('hidden');
+  document.getElementById('nuevo-proveedor-nombre').focus();
+}
+
+function cerrarProveedorDesdeCompra() {
+  if (gestiones.proveedores.guardando) return;
+  document.getElementById('nuevo-proveedor-modal').classList.add('hidden');
+  document.getElementById('btn-nuevo-proveedor-compra').focus();
 }
 
 async function eliminarGestion(resource, registro) {

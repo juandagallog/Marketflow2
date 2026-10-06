@@ -27,7 +27,8 @@ async function cargarCatalogoRemoto() {
   reintentar.disabled = true;
   reintentar.classList.add('hidden');
   estado.textContent = "";
-  const quitarSkeleton = mostrarSkeleton(estado);
+  const quitarSkeleton = mostrarSkeleton(productGrid, modoVistaLista ? 'catalogo-lista' : 'catalogo');
+  const quitarSkeletonCRUD = mostrarSkeleton(document.getElementById('products-table-body'), 'tabla', 7);
   try {
     const [datosProductos, datosCategorias] = await Promise.all([apiGet("productos"), apiGet("categorias")]);
     if (!Array.isArray(datosProductos) || !Array.isArray(datosCategorias)) throw new Error("La API debe devolver listas.");
@@ -46,8 +47,10 @@ async function cargarCatalogoRemoto() {
     mostrarNotificacion(error.message, "error");
   } finally {
     quitarSkeleton();
+    quitarSkeletonCRUD();
     nuevo.disabled = !catalogoCargado || categorias.length === 0;
     reintentar.disabled = false;
+    iniciarBorradorVenta();
   }
 }
 let factura = [];
@@ -264,6 +267,7 @@ function renderizarFactura() {
         </div>`;
 
     calcularTotales();
+    guardarBorradorVenta();
     return;
   }
 
@@ -318,6 +322,7 @@ function renderizarFactura() {
   });
 
   calcularTotales();
+  guardarBorradorVenta();
 }
 
 
@@ -417,6 +422,7 @@ if (botonVaciar) {
   botonVaciar.addEventListener("click", () => {
     if (productosGuardando || ventaPendiente || ventaAbiertaGuardadoPendiente || compraPendiente) return;
     factura = [];
+    eliminarBorradorVenta();
     renderizarFactura();
   });
 }
@@ -597,6 +603,7 @@ if (botonFinalizar) {
     }
 
     const operacion = ventaPendiente;
+    marcarEscrituraBorrador(operacion.venta.id);
     const nuevaVenta = operacion.venta;
 
     productosGuardando = true;
@@ -643,6 +650,7 @@ if (botonFinalizar) {
     }
 
     ventaPendienteId = null;
+    eliminarBorradorVenta();
     ventaPendiente = null;
     ventaAbiertaActualId = null;
     ventaAbiertaActualFecha = null;
